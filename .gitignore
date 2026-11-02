@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# ASTRAFLAME task artifacts (FEAT planning files) — never committed
+.agents/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

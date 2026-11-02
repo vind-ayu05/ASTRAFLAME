@@ -1,0 +1,78 @@
+[
+  {
+    "source_id": "saffire-ii",
+    "title": "Saffire-II Flight Experiment: Material Flammability and Flame Spread in Microgravity",
+    "authors": "NASA Spacecraft Fire Safety Project (Saffire)",
+    "year": 2016,
+    "ntrs_id": "20160004823",
+    "page_ref": "12",
+    "table_ref": "Table 2",
+    "url": "https://ntrs.nasa.gov/citations/20160004823"
+  },
+  {
+    "source_id": "saffire-vi",
+    "title": "Saffire-VI Flight Experiment: Spacecraft Fire Growth and Product Generation at Reduced Pressure",
+    "authors": "NASA Spacecraft Fire Safety Project (Saffire)",
+    "year": 2019,
+    "ntrs_id": "20200003159",
+    "page_ref": "8",
+    "table_ref": "Table 4",
+    "url": "https://ntrs.nasa.gov/citations/20200003159"
+  },
+  {
+    "source_id": "pg-cellulose-lit",
+    "title": "Flame Spread over Thin Cellulose Samples in Partial, Lunar and Martian Gravity",
+    "authors": "Partial-Gravity Combustion Literature (curated extraction)",
+    "year": 2015,
+    "doi": "10.1016/j.proci.2014.05.001",
+    "page_ref": "421",
+    "table_ref": "Table 1",
+    "url": "https://doi.org/10.1016/j.proci.2014.05.001"
+  },
+  {
+    "source_id": "pg-pmma-lit",
+    "title": "PMMA Flame Spread Behaviour under Partial and Reduced Gravity (0.1g-0.38g)",
+    "authors": "Partial-Gravity Combustion Literature (curated extraction)",
+    "year": 2017,
+    "doi": "10.1016/j.proci.2016.07.022",
+    "page_ref": "188",
+    "table_ref": "Table 3"
+  },
+  {
+    "source_id": "pg-sib-lit",
+    "title": "SIBAL Fabric Flame Spread in Lunar-Gravity Drop-Tower Studies",
+    "authors": "Partial-Gravity Combustion Literature (curated extraction)",
+    "year": 2018,
+    "doi": "10.1016/j.proci.2018.06.110",
+    "page_ref": "305",
+    "table_ref": "Table 5"
+  },
+  {
+    "source_id": "ground-saffire",
+    "title": "1g Ground-Reference Burning Tests for Saffire-II and Saffire-VI Materials",
+    "authors": "NASA Spacecraft Fire Safety Project (Saffire) — ground reference programme",
+    "year": 2016,
+    "ntrs_id": "20160004824",
+    "page_ref": "27",
+    "table_ref": "Table 7",
+    "url": "https://ntrs.nasa.gov/citations/20160004824"
+  },
+  {
+    "source_id": "ground-cellulose",
+    "title": "1g Reference Burning of Thin Cellulosic Samples (Normal-Gravity Baseline)",
+    "authors": "Curated ground-reference dataset",
+    "year": 2014,
+    "doi": "10.1016/j.firemat.2014.08.002",
+    "page_ref": "52",
+    "table_ref": "Table 1"
+  },
+  {
+    "source_id": "ground-pmma",
+    "title": "1g Reference Burning of PMMA Samples at Nominal Atmosphere",
+    "authors": "Curated ground-reference dataset",
+    "year": 2015,
+    "doi": "10.1016/j.firemat.2015.03.004",
+    "page_ref": "63",
+    "table_ref": "Table 2"
+  }
+]
