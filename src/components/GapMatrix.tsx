@@ -9,6 +9,7 @@ import { records } from '../data/records.ts';
 import { isMissing } from '../lib/format.ts';
 import { TierBadge } from './TierBadge.tsx';
 import { ReviewBadge } from './ReviewBadge.tsx';
+import { BeginnerExplanation } from './BeginnerExplanation.tsx';
 import type { ExperimentRecord, GravityCategory, MaterialFamily } from '../types/index.ts';
 
 interface AtmoColumn {
@@ -76,7 +77,9 @@ export function GapMatrix() {
           <table className="w-full border-separate border-spacing-0 text-xs" aria-label={`Gap matrix for ${material}`}>
             <thead>
               <tr>
-                <th scope="col" className="border-b border-subtle px-3 py-2 text-left font-medium text-text-muted">Gravity</th>
+                <th scope="col" className="border-b border-subtle px-3 py-2 text-left font-medium text-text-muted">
+                  <BeginnerExplanation technical="Gravity" simple="Gravity condition" />
+                </th>
                 {ATMO_COLS.map((a) => (
                   <th key={a.label} scope="col" className="border-b border-subtle px-3 py-2 text-left font-medium text-text-muted">
                     {a.label}
@@ -104,7 +107,12 @@ export function GapMatrix() {
                           {hasEvidence ? (
                             <span className="space-y-0.5">
                               <span className="block font-medium text-text-primary">{cell.records.length} record{cell.records.length !== 1 ? 's' : ''}</span>
-                              <span className="block text-text-muted">T1:{cell.tier1} T2:{cell.tier2}</span>
+                              <span className="block text-text-muted">
+                                <BeginnerExplanation
+                                  technical={`T1:${cell.tier1} T2:${cell.tier2}`}
+                                  simple={`Tier 1: ${cell.tier1} · Tier 2: ${cell.tier2}`}
+                                />
+                              </span>
                             </span>
                           ) : (
                             <span className="hatch block rounded px-3 py-2 text-text-muted" aria-label="No evidence">
@@ -167,7 +175,12 @@ export function GapMatrix() {
             </ul>
             <aside className="mt-5 rounded-lg border border-subtle bg-bg-elevated p-3 text-xs text-text-muted">
               <p className="font-medium text-text-secondary">Limitations</p>
-              <p className="mt-1">Records are curated seed data. Coverage is indicative only — not a systematic review. A suggested next experiment would target this exact gravity + atmosphere + material combination with broader parameter variation.</p>
+              <p className="mt-1">
+                <BeginnerExplanation
+                  technical="Records are curated seed data. Coverage is indicative only — not a systematic review. A suggested next experiment would target this exact gravity + atmosphere + material combination with broader parameter variation."
+                  simple="These records come from a curated research database, not a complete search of all studies. A gap here means no matching experiments were found in this dataset — it is a research opportunity, not proof that fire behaves the same way."
+                />
+              </p>
             </aside>
           </aside>
         </>

@@ -8,6 +8,8 @@ import { getRecord, records } from '../data/records.ts';
 import { TierBadge } from './TierBadge.tsx';
 import { ReviewBadge } from './ReviewBadge.tsx';
 import { SourcePanel } from './SourcePanel.tsx';
+import { BeginnerExplanation } from './BeginnerExplanation.tsx';
+import { ExplanationPanel } from './ExplanationPanel.tsx';
 import type { MaybeValue } from '../types/index.ts';
 
 interface RecordDetailProps {
@@ -84,6 +86,13 @@ export function RecordDetail({ recordId }: RecordDetailProps) {
         {record.notes ? <p className="mt-1 text-xs italic text-text-muted">{record.notes}</p> : null}
       </div>
 
+      {/* Beginner Mode page explanation */}
+      <ExplanationPanel
+        title="About this record"
+        technical="This record captures measurements from a single combustion experiment. It documents the environmental conditions (gravity, oxygen, pressure, airflow), specimen properties (material, geometry), and outcomes (flame spread rate, burn length, heat release, combustion products). Missing values were not reported in the source."
+        simple="This page shows the details of one fire experiment. It tells you what conditions the experiment used — like how much gravity there was, how much oxygen was in the air, and what material was tested. It also shows what was measured, like how fast the flame spread. If a value says 'not reported', it means the research paper did not include that measurement."
+      />
+
       {/* What this record shows */}
       <section aria-label="What this record shows" className="card p-5">
         <h2 className="mb-4 font-display text-sm font-semibold uppercase tracking-[0.12em] text-text-secondary">
@@ -126,16 +135,31 @@ export function RecordDetail({ recordId }: RecordDetailProps) {
             {missingFields.map((f) => (
               <li key={f} className="flex items-start gap-2">
                 <span aria-hidden="true" className="mt-0.5 text-text-muted">·</span>
-                <span><span className="italic">{f}</span> — not reported for this experiment</span>
+                <span>
+                  <BeginnerExplanation
+                    technical={`${f} — not reported for this experiment`}
+                    simple={`${f} — the research paper did not provide this value`}
+                  />
+                </span>
               </li>
             ))}
             <li className="flex items-start gap-2">
               <span aria-hidden="true" className="mt-0.5 text-text-muted">·</span>
-              <span>This record represents a single sample; it does not generalise across all conditions</span>
+              <span>
+                <BeginnerExplanation
+                  technical="This record represents a single sample; it does not generalise across all conditions"
+                  simple="This is one experiment. The results may be different in other conditions or with different materials."
+                />
+              </span>
             </li>
             <li className="flex items-start gap-2">
               <span aria-hidden="true" className="mt-0.5 text-text-muted">·</span>
-              <span>Results are specific to the gravity category: <span className="font-medium">{record.gravity_category}</span></span>
+              <span>
+                <BeginnerExplanation
+                  technical={`Results are specific to the gravity category: ${record.gravity_category}`}
+                  simple={`These results are only for the gravity condition: ${record.gravity_category}. They may not apply to Earth, the Moon, or Mars without further study.`}
+                />
+              </span>
             </li>
           </ul>
         </section>

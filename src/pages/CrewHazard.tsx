@@ -8,6 +8,8 @@ import { records } from '../data/records.ts';
 import { isMissing, formatMaybe } from '../lib/format.ts';
 import { SourceButton } from '../components/SourcePanel.tsx';
 import { ScientificDisclaimer } from '../components/ScientificDisclaimer.tsx';
+import { ExplanationPanel } from '../components/ExplanationPanel.tsx';
+import { BeginnerExplanation } from '../components/BeginnerExplanation.tsx';
 import type { ExperimentRecord } from '../types/index.ts';
 
 const VI_RECORDS = records.filter(
@@ -49,6 +51,12 @@ export function CrewHazard() {
           </p>
         </header>
 
+        <ExplanationPanel
+          title="About this page"
+          technical="This page presents CO and CO₂ concentration increases measured during Saffire-VI microgravity flight experiments. A linear dilution model scales the reference measurements to user-defined cabin volumes. LOC (Loss of Crew) thresholds are not computed here; this is an indicative illustration only."
+          simple="This page shows how much carbon monoxide (CO) and carbon dioxide (CO₂) a fire can add to a spacecraft cabin. CO is toxic even at low levels. CO₂ makes air harder to breathe. The slider lets you see how the numbers change if the cabin is bigger or smaller. These are real measurements from NASA's Saffire-VI experiments in space — but they are not a prediction for every situation."
+        />
+
         <aside
           role="note"
           className="card border-brand-orange/20 bg-bg-elevated p-4 text-sm font-medium text-text-secondary"
@@ -73,7 +81,10 @@ export function CrewHazard() {
             className="w-full max-w-sm"
           />
           <p className="mt-1 text-xs text-text-muted">
-            Reference volume (Saffire-VI): {REF_VOLUME} m³. Scaled ppm = measured × {REF_VOLUME} / slider volume.
+            <BeginnerExplanation
+              technical={`Reference volume (Saffire-VI): ${REF_VOLUME} m³. Scaled ppm = measured × ${REF_VOLUME} / slider volume.`}
+              simple={`The Saffire-VI experiment used a cabin space of ${REF_VOLUME} m³. Move the slider to see how gas levels change in a different size space. A smaller cabin means higher concentrations; a larger cabin means lower concentrations.`}
+            />
           </p>
         </section>
 
@@ -134,10 +145,16 @@ export function CrewHazard() {
         {/* Smoke data */}
         <section aria-label="Smoke particle data" className="card p-5">
           <h2 className="mb-3 font-display text-sm font-semibold uppercase tracking-[0.12em] text-text-secondary">
-            Smoke particle concentration (PM, mg/m³)
+            <BeginnerExplanation
+              technical="Smoke particle concentration (PM, mg/m³)"
+              simple="Smoke particles in the air (how much smoke per cubic metre)"
+            />
           </h2>
           <p className="mb-3 text-xs text-text-muted">
-            Cited constant dataset — Saffire-VI reference volume ({REF_VOLUME} m³). Not scaled with the slider.
+            <BeginnerExplanation
+              technical={`Cited constant dataset — Saffire-VI reference volume (${REF_VOLUME} m³). Not scaled with the slider.`}
+              simple={`These smoke measurements are fixed values from the Saffire-VI study at ${REF_VOLUME} m³. They do not change when you move the slider above.`}
+            />
           </p>
           <ul className="space-y-2">
             {SMOKE_DATA.map((s) => (
