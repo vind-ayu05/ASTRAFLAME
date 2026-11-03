@@ -57,7 +57,13 @@ export type Geometry =
 export type Tier = 1 | 2;
 
 /** Editorial review status of a record. */
-export type ReviewStatus = 'reviewed' | 'draft';
+export type ReviewStatus = 'draft' | 'source-checked' | 'values-verified' | 'approved';
+
+/**
+ * Verification status — identical to ReviewStatus, aliased for clarity when
+ * computing an aggregate status across multiple records for a source.
+ */
+export type VerificationStatus = ReviewStatus;
 
 /** Curator-assessed confidence in the extracted value. */
 export type Confidence = 'high' | 'medium' | 'low';

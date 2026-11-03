@@ -6,7 +6,8 @@ import { useState, useMemo } from 'react';
 import { records } from '../data/records.ts';
 import { EvidenceTable } from '../components/EvidenceTable.tsx';
 import { EvidenceCard } from '../components/EvidenceCard.tsx';
-import type { ExperimentRecord, GravityCategory, MaterialFamily } from '../types/index.ts';
+import { SourceDrawer } from '../components/SourcePanel.tsx';
+import type { ExperimentRecord, GravityCategory, MaterialFamily, ReviewStatus } from '../types/index.ts';
 
 function canToggleSelect(
   current: string[],
@@ -34,19 +35,32 @@ function canToggleSelect(
 const ALL_GRAVITIES: GravityCategory[] = ['microgravity', 'partial', 'lunar', 'mars', '1g'];
 const ALL_MATERIALS: MaterialFamily[] = ['sib', 'pmma', 'silicone', 'cellulose'];
 
+type ReviewStatusFilter = 'all' | ReviewStatus;
+
+const REVIEW_STATUS_OPTIONS: { value: ReviewStatusFilter; label: string }[] = [
+  { value: 'all', label: 'All statuses' },
+  { value: 'draft', label: 'Draft' },
+  { value: 'source-checked', label: 'Source Checked' },
+  { value: 'values-verified', label: 'Values Verified' },
+  { value: 'approved', label: 'Approved' },
+];
+
 export function Evidence() {
   const [search, setSearch] = useState('');
   const [filterGravity, setFilterGravity] = useState<GravityCategory | ''>('');
   const [filterMaterial, setFilterMaterial] = useState<MaterialFamily | ''>('');
   const [filterTier, setFilterTier] = useState<'' | '1' | '2'>('');
+  const [reviewStatusFilter, setReviewStatusFilter] = useState<ReviewStatusFilter>('all');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectionWarning, setSelectionWarning] = useState('');
+  const [drawerSourceId, setDrawerSourceId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     return records.filter((r) => {
       if (filterGravity && r.gravity_category !== filterGravity) return false;
       if (filterMaterial && r.material_family !== filterMaterial) return false;
       if (filterTier && String(r.tier) !== filterTier) return false;
+      if (reviewStatusFilter !== 'all' && r.review_status !== reviewStatusFilter) return false;
       if (search) {
         const q = search.toLowerCase();
         return (
@@ -57,7 +71,7 @@ export function Evidence() {
       }
       return true;
     });
-  }, [search, filterGravity, filterMaterial, filterTier]);
+  }, [search, filterGravity, filterMaterial, filterTier, reviewStatusFilter]);
 
   function toggleSelect(id: string) {
     const check = canToggleSelect(selectedIds, id, records);
@@ -106,6 +120,19 @@ export function Evidence() {
             <option value="1">Tier 1 (NASA PSI)</option>
             <option value="2">Tier 2 (Literature)</option>
           </select>
+
+          <label className="sr-only" htmlFor="ev-status">Filter by verification status</label>
+          <select
+            id="ev-status"
+            value={reviewStatusFilter}
+            onChange={(e) => setReviewStatusFilter(e.target.value as ReviewStatusFilter)}
+            className={selectCls}
+            aria-label="Verification Status"
+          >
+            {REVIEW_STATUS_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
         </section>
 
         <p className="mb-3 text-sm text-text-muted">{filtered.length} record{filtered.length !== 1 ? 's' : ''}</p>
@@ -117,6 +144,7 @@ export function Evidence() {
             selectedIds={selectedIds}
             onToggleSelect={toggleSelect}
             selectionWarning={selectionWarning || undefined}
+            onSourceClick={(sourceId) => setDrawerSourceId(sourceId)}
           />
         </div>
 
@@ -136,6 +164,14 @@ export function Evidence() {
           )}
         </div>
       </div>
+
+      {/* Source Drawer — Evidence Explorer only */}
+      <SourceDrawer
+        sourceId={drawerSourceId ?? ''}
+        open={drawerSourceId !== null}
+        onClose={() => setDrawerSourceId(null)}
+        relatedRecords={records.filter((r) => r.source_id === drawerSourceId)}
+      />
     </main>
   );
 }

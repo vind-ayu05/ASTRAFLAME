@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import type { ExperimentRecord } from '../types/index.ts';
 import { formatMaybe } from '../lib/format.ts';
 import { TierBadge } from './TierBadge.tsx';
+import { ReviewBadge } from './ReviewBadge.tsx';
 import { SourceButton } from './SourcePanel.tsx';
 
 interface EvidenceTableProps {
@@ -13,9 +14,11 @@ interface EvidenceTableProps {
   selectedIds: string[];
   onToggleSelect: (id: string) => void;
   selectionWarning?: string;
+  /** Called when a source button is clicked — passes the source_id. */
+  onSourceClick?: (sourceId: string) => void;
 }
 
-export function EvidenceTable({ records, selectedIds, onToggleSelect, selectionWarning }: EvidenceTableProps) {
+export function EvidenceTable({ records, selectedIds, onToggleSelect, selectionWarning, onSourceClick }: EvidenceTableProps) {
   return (
     <div className="overflow-x-auto">
       {selectionWarning && (
@@ -25,8 +28,8 @@ export function EvidenceTable({ records, selectedIds, onToggleSelect, selectionW
       )}
       <table className="w-full border-separate border-spacing-0 text-sm" aria-label="Evidence records">
         <thead>
-          <tr className="text-left">
-            {['', 'Sample ID', 'Investigation', 'Material', 'Geometry', 'Gravity', 'O₂', 'Pressure', 'Airflow', 'Flow', 'Spread rate', 'Outcome', 'Tier', 'Source'].map((h) => (
+          <tr className="sticky top-0 z-10 bg-bg-primary text-left">
+            {['', 'Sample ID', 'Investigation', 'Material', 'Geometry', 'Gravity', 'O₂', 'Pressure', 'Airflow', 'Flow', 'Spread rate', 'Outcome', 'Tier', 'Status', 'Source'].map((h) => (
               <th
                 key={h}
                 scope="col"
@@ -43,7 +46,7 @@ export function EvidenceTable({ records, selectedIds, onToggleSelect, selectionW
             return (
               <tr
                 key={record.record_id}
-                className={`transition-colors hover:bg-bg-elevated ${selected ? 'bg-bg-elevated ring-inset ring-1 ring-brand-orange/30' : ''}`}
+                className={`transition-colors even:bg-bg-secondary/30 hover:bg-bg-elevated ${selected ? 'bg-bg-elevated ring-inset ring-1 ring-brand-orange/30' : ''}`}
               >
                 <td className="border-b border-subtle px-3 py-2">
                   <button
@@ -73,7 +76,19 @@ export function EvidenceTable({ records, selectedIds, onToggleSelect, selectionW
                 <td className="border-b border-subtle px-3 py-2 font-mono text-xs text-text-secondary">
                   <span className="flex items-center gap-1">
                     {formatMaybe(record.spread_rate_mm_s, 'mm/s')}
-                    <SourceButton sourceId={record.source_id} label="spread rate" />
+                    {onSourceClick ? (
+                      <button
+                        type="button"
+                        onClick={() => onSourceClick(record.source_id)}
+                        aria-label={`View source for spread rate`}
+                        title="View source"
+                        className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-subtle bg-bg-card text-text-muted transition-colors hover:text-brand-orange"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/></svg>
+                      </button>
+                    ) : (
+                      <SourceButton sourceId={record.source_id} label="spread rate" />
+                    )}
                   </span>
                 </td>
                 <td className="border-b border-subtle px-3 py-2 text-text-secondary">{record.outcome}</td>
@@ -81,7 +96,22 @@ export function EvidenceTable({ records, selectedIds, onToggleSelect, selectionW
                   <TierBadge tier={record.tier} />
                 </td>
                 <td className="border-b border-subtle px-3 py-2">
-                  <SourceButton sourceId={record.source_id} label={record.record_id} />
+                  <ReviewBadge status={record.review_status} />
+                </td>
+                <td className="border-b border-subtle px-3 py-2">
+                  {onSourceClick ? (
+                    <button
+                      type="button"
+                      onClick={() => onSourceClick(record.source_id)}
+                      aria-label={`View source for ${record.record_id}`}
+                      title="View source"
+                      className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-subtle bg-bg-card text-text-muted transition-colors hover:text-brand-orange"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/></svg>
+                    </button>
+                  ) : (
+                    <SourceButton sourceId={record.source_id} label={record.record_id} />
+                  )}
                 </td>
               </tr>
             );
