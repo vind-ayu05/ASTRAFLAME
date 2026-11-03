@@ -6,7 +6,9 @@ import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext.tsx';
 import { BeginnerModeProvider } from './context/BeginnerModeContext.tsx';
+import { DemoProvider } from './context/DemoContext.tsx';
 import { Navigation } from './components/Navigation.tsx';
+import { GuidedDemo } from './components/GuidedDemo.tsx';
 import { ScientificDisclaimer } from './components/ScientificDisclaimer.tsx';
 import { Overview } from './pages/Overview.tsx';
 import { Scenario } from './pages/Scenario.tsx';
@@ -28,6 +30,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/crew-hazard': 'Crew Hazard',
   '/ask': 'Ask',
   '/methodology': 'Methodology',
+  '/next-experiment': 'Next Experiment Planner',
 };
 
 function DocumentTitle() {
@@ -60,6 +63,7 @@ function AppShell() {
       <a href="#main" className="skip-link">Skip to content</a>
       <DocumentTitle />
       <Navigation />
+      <GuidedDemo />
       <Routes>
         <Route path="/" element={<Overview />} />
         <Route path="/scenario" element={<Scenario />} />
@@ -90,7 +94,9 @@ function App() {
     <BrowserRouter>
       <ThemeProvider>
         <BeginnerModeProvider>
-          <AppShell />
+          <DemoProvider>
+            <AppShell />
+          </DemoProvider>
         </BeginnerModeProvider>
       </ThemeProvider>
     </BrowserRouter>

@@ -135,7 +135,23 @@ export function Evidence() {
           </select>
         </section>
 
-        <p className="mb-3 text-sm text-text-muted">{filtered.length} record{filtered.length !== 1 ? 's' : ''}</p>
+        <p className="mb-3 text-sm text-text-muted">{filtered.length} record{filtered.length !== 1 ? 's' : ''}
+          {filtered.length !== records.length && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearch('');
+                setFilterGravity('');
+                setFilterMaterial('');
+                setFilterTier('');
+                setReviewStatusFilter('all');
+              }}
+              className="ml-3 text-xs text-brand-orange hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-orange"
+            >
+              Clear filters
+            </button>
+          )}
+        </p>
 
         {/* Desktop table */}
         <div className="hidden md:block">

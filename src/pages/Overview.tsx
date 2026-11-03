@@ -3,6 +3,7 @@
 
 import { ResponsiveHeroBanner } from '../components/ui/responsive-hero-banner.tsx';
 import { BeginnerExplanation } from '../components/BeginnerExplanation.tsx';
+import { useDemo } from '../context/DemoContext.tsx';
 
 const INNOVATIONS = [
   'Condition-locked cohort matching — evidence is never merged across gravity categories or flow directions.',
@@ -13,9 +14,28 @@ const INNOVATIONS = [
 ];
 
 export function Overview() {
+  const { start } = useDemo();
+
   return (
     <main id="main" aria-label="Overview">
       <ResponsiveHeroBanner />
+
+      {/* Guided demo entry point */}
+      <section aria-label="Guided demo" className="container-page pt-8">
+        <div className="flex items-center gap-4 rounded-xl border border-brand-orange/20 bg-bg-card p-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-text-primary">New here?</p>
+            <p className="text-xs text-text-secondary">Take the 60-second guided tour through ASTRAFLAME's core features.</p>
+          </div>
+          <button
+            type="button"
+            onClick={start}
+            className="flex-shrink-0 rounded-lg bg-brand-orange px-4 py-2 text-sm font-medium text-[#090B0E] transition-colors hover:bg-brand-orange-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-orange"
+          >
+            Start Demo
+          </button>
+        </div>
+      </section>
 
       <section aria-label="Key innovations" className="container-page py-12">
         <h2 className="mb-5 font-display text-sm font-semibold uppercase tracking-[0.14em] text-text-secondary">

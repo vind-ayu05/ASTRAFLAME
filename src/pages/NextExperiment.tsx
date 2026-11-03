@@ -4,6 +4,7 @@
 import { records } from '../data/records.ts';
 import { PRESETS } from '../lib/presets.ts';
 import type { GravityCategory, MaterialFamily } from '../types/index.ts';
+import { ExplanationPanel } from '../components/ExplanationPanel.tsx';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -279,6 +280,14 @@ export function NextExperiment() {
         <p className="mt-2 text-sm text-text-secondary">
           Research gaps derived from existing NASA records and mission presets. No invented data.
         </p>
+
+        <div className="mt-4 mb-2">
+          <ExplanationPanel
+            title="About this page"
+            technical="This planner enumerates gravity × material combinations with sparse evidence (fewer than 3 records) and scores them by mission relevance derived from the PRESETS registry. Priority is not a scientific recommendation — it is a structured research direction derived from coverage density."
+            simple="This page shows which combinations of gravity level and material type don't have much experimental data yet. It flags which ones are most important based on planned mission types (like the Moon or Mars). These are suggestions for future experiments, not claims about what will happen."
+          />
+        </div>
 
         {gaps.length === 0 ? (
           <p className="mt-8 text-center text-text-muted">
