@@ -6,6 +6,7 @@ import { Check, Minus, Plus } from 'lucide-react';
 import { isMissing, formatMaybe } from '../lib/format.ts';
 import { records } from '../data/records.ts';
 import type { ExperimentRecord } from '../types/index.ts';
+import { BeginnerExplanation } from './BeginnerExplanation.tsx';
 
 type LedgerOutcome = 'Matches' | 'Less flammable in µg' | 'More flammable in µg' | 'Cannot compare';
 
@@ -65,6 +66,13 @@ export function GravityLedger() {
         <strong className="font-medium text-text-secondary">Descriptive only.</strong> Tiny sample.
         Not a statement about materials in general.
       </aside>
+
+      <p className="text-sm text-text-secondary">
+        <BeginnerExplanation
+          technical="Microgravity reduces buoyancy-driven flows, altering flame spread rates relative to 1g baselines."
+          simple="In space, there is no buoyancy (hot air does not rise), so flames behave differently than on Earth. This ledger compares measured values between Earth gravity and microgravity."
+        />
+      </p>
 
       <p className="text-sm text-text-secondary">
         {rows.length} paired sample{rows.length !== 1 ? 's' : ''} (1g vs microgravity).

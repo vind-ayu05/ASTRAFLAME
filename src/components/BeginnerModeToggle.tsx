@@ -15,7 +15,7 @@ export function BeginnerModeToggle() {
       aria-pressed={enabled}
       aria-label="Beginner mode"
       title="Beginner mode"
-      className="inline-flex items-center gap-2 rounded-lg border border-subtle bg-bg-card px-3 py-1.5 text-sm text-text-secondary transition-colors hover:text-text-primary"
+      className="inline-flex items-center gap-2 rounded-lg border border-subtle bg-bg-card px-3 py-1.5 text-sm text-text-secondary transition-colors hover:text-text-primary focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-orange"
     >
       <span
         aria-hidden="true"

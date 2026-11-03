@@ -2,6 +2,7 @@
 // Challenge reference is NOT here; it appears only in the footer and Methodology.
 
 import { ResponsiveHeroBanner } from '../components/ui/responsive-hero-banner.tsx';
+import { BeginnerExplanation } from '../components/BeginnerExplanation.tsx';
 
 const INNOVATIONS = [
   'Condition-locked cohort matching — evidence is never merged across gravity categories or flow directions.',
@@ -28,6 +29,13 @@ export function Overview() {
             </li>
           ))}
         </ol>
+        <div className="mt-6 rounded-lg border border-subtle bg-bg-card p-4 text-sm text-text-secondary">
+          <BeginnerExplanation
+            technical="Scenario Evidence Distance"
+            simple="How closely each experiment matches your mission conditions"
+          />
+          {' '}— the core metric ASTRAFLAME uses to show how well NASA data covers your scenario.
+        </div>
       </section>
     </main>
   );

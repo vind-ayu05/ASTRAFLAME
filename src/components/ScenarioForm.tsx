@@ -3,9 +3,11 @@
 // Emits a SEDInput-shaped scenario to the parent on every change.
 
 import { useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { SEDInput } from '../lib/sed-engine.ts';
 import type { FlowDirection, GravityCategory, Geometry, MaterialFamily } from '../types/index.ts';
+import { TechnicalTerm } from './TechnicalTerm.tsx';
 
 export interface ScenarioState extends SEDInput {
   /** Gravity in g — stored for display; not used by the SED engine directly. */
@@ -136,7 +138,7 @@ const GEOMETRIES: { value: Geometry; label: string }[] = [
   { value: 'other', label: 'Other' },
 ];
 
-function field(label: string, id: string, children: React.ReactNode) {
+function field(label: ReactNode, id: string, children: ReactNode) {
   return (
     <div>
       <label htmlFor={id} className="mb-1 block text-xs font-medium text-text-secondary">
@@ -198,7 +200,11 @@ export function ScenarioForm({ scenario, onChange }: ScenarioFormProps) {
           Environment
         </legend>
 
-        {field('Gravity regime', 'gravity_category',
+        {field(
+          <TechnicalTerm term="Gravity regime" definition="The gravity condition (e.g. microgravity, lunar, Earth).">
+            Gravity regime
+          </TechnicalTerm>,
+          'gravity_category',
           <select
             id="gravity_category"
             className={selectCls}
@@ -260,7 +266,11 @@ export function ScenarioForm({ scenario, onChange }: ScenarioFormProps) {
           />
         )}
 
-        {field('Flow direction', 'flow_direction',
+        {field(
+          <TechnicalTerm term="Flow direction" definition="Whether air moves with or against flame spread direction.">
+            Flow direction
+          </TechnicalTerm>,
+          'flow_direction',
           <select
             id="flow_direction"
             className={selectCls}

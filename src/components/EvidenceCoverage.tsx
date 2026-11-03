@@ -13,6 +13,7 @@ import { SourceButton } from './SourcePanel.tsx';
 import { Link } from 'react-router-dom';
 import { formatMaybe } from '../lib/format.ts';
 import type { ExperimentRecord } from '../types/index.ts';
+import { ExplanationPanel } from './ExplanationPanel.tsx';
 
 interface EvidenceCoverageProps {
   scenario: SEDInput;
@@ -74,6 +75,13 @@ export function EvidenceCoverage({ scenario }: EvidenceCoverageProps) {
           <span>Export brief</span>
         </button>
       </div>
+
+      {/* Evidence coverage explanation panel */}
+      <ExplanationPanel
+        title="What does evidence coverage mean?"
+        technical="Evidence coverage measures how many experimental parameters in the selected dataset fall within the tested range for this scenario cohort."
+        simple="This shows how much NASA experimental data is available for conditions similar to your mission. High coverage means many experiments match. None means no experiments match."
+      />
 
       {/* Gap banner */}
       {hasGravityAtmoGap && (

@@ -3,6 +3,7 @@
 
 import { BrandLogo } from '../components/BrandLogo.tsx';
 import { ScientificDisclaimer } from '../components/ScientificDisclaimer.tsx';
+import { ExplanationPanel } from '../components/ExplanationPanel.tsx';
 
 const SECTIONS = [
   {
@@ -68,6 +69,11 @@ export function Methodology() {
         </div>
 
         <div className="space-y-6">
+          <ExplanationPanel
+            title="How SED scoring works"
+            technical="The Scenario Evidence Distance engine computes per-axis coverage by checking whether each mission parameter falls within the min/max range of the selected cohort."
+            simple="The scoring engine checks each condition of your mission (like gravity and oxygen) against the available NASA experiments to see how well they match."
+          />
           {SECTIONS.map((s) => (
             <section key={s.title} aria-label={s.title} className="card p-5">
               <h2 className="mb-2 font-display text-sm font-semibold text-text-primary">{s.title}</h2>
