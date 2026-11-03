@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import {
   FileText,
+  FlaskConical,
   Home,
   LayoutGrid,
   Menu,
@@ -42,6 +43,7 @@ const LINKS: NavItem[] = [
   { to: '/gaps', label: 'Gaps', icon: LayoutGrid },
   { to: '/ask', label: 'Ask', icon: MessageCircle },
   { to: '/methodology', label: 'Methodology', icon: ScrollText },
+  { to: '/next-experiment', label: 'Next Exp.', icon: FlaskConical },
 ];
 
 const BOTTOM_TO = new Set(['/', '/scenario', '/evidence', '/gaps', '/ask']);

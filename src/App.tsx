@@ -17,6 +17,7 @@ import { Gaps } from './pages/Gaps.tsx';
 import { CrewHazard } from './pages/CrewHazard.tsx';
 import { Ask } from './pages/Ask.tsx';
 import { Methodology } from './pages/Methodology.tsx';
+import { NextExperiment } from './pages/NextExperiment.tsx';
 
 const PAGE_TITLES: Record<string, string> = {
   '/': 'Overview',
@@ -69,6 +70,7 @@ function AppShell() {
         <Route path="/crew-hazard" element={<CrewHazard />} />
         <Route path="/ask" element={<Ask />} />
         <Route path="/methodology" element={<Methodology />} />
+        <Route path="/next-experiment" element={<NextExperiment />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <footer className="mt-12 border-t border-subtle pb-20 md:pb-0">
