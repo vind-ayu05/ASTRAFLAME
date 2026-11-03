@@ -83,8 +83,14 @@ export function EvidenceCoverage({ scenario }: EvidenceCoverageProps) {
         simple="This shows how much NASA experimental data is available for conditions similar to your mission. High coverage means many experiments match. None means no experiments match."
       />
 
-      {/* Gap banner */}
-      {hasGravityAtmoGap && (
+      {/* Gap banner — lunar/mars specific or generic */}
+      {coverage === 'None' && (scenario.gravity_category === 'lunar' || scenario.gravity_category === 'mars') ? (
+        <aside role="status" aria-live="polite" className="card border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+          <AlertTriangle size={16} className="mr-2 inline text-amber-400" aria-hidden="true" />
+          No direct flight experiment covers {scenario.gravity_category === 'lunar' ? 'lunar' : 'Martian'} gravity for this material.
+          {' '}Available evidence is Tier 2 literature only.
+        </aside>
+      ) : hasGravityAtmoGap ? (
         <aside
           role="status"
           aria-live="polite"
@@ -93,7 +99,7 @@ export function EvidenceCoverage({ scenario }: EvidenceCoverageProps) {
           <AlertTriangle size={16} className="mr-2 inline text-brand-orange" aria-hidden="true" />
           No record covers this gravity and atmosphere combination.
         </aside>
-      )}
+      ) : null}
 
       {/* Categorical axes */}
       <div className="card p-5">

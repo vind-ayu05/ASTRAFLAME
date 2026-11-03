@@ -8,6 +8,7 @@ import { useSearchParams } from 'react-router-dom';
 import type { SEDInput } from '../lib/sed-engine.ts';
 import type { FlowDirection, GravityCategory, Geometry, MaterialFamily } from '../types/index.ts';
 import { TechnicalTerm } from './TechnicalTerm.tsx';
+import { PRESETS } from '../lib/presets.ts';
 
 export interface ScenarioState extends SEDInput {
   /** Gravity in g — stored for display; not used by the SED engine directly. */
@@ -20,95 +21,6 @@ interface ScenarioFormProps {
   scenario: ScenarioState;
   onChange: (s: ScenarioState) => void;
 }
-
-interface Preset {
-  label: string;
-  value: string;
-  state: ScenarioState;
-}
-
-const PRESETS: Preset[] = [
-  {
-    label: 'ISS Cabin',
-    value: 'iss-cabin',
-    state: {
-      gravity_category: 'microgravity',
-      gravity_g: 0.0001,
-      oxygen_pct: 21,
-      total_pressure_kpa: 101.3,
-      airflow_cm_s: 20,
-      flow_direction: 'concurrent',
-      material_family: 'sib',
-      materialType: 'SIBAL fabric',
-      geometry: 'flat-sheet',
-      thickness_mm: 2.1,
-    },
-  },
-  {
-    label: 'Cygnus-Class',
-    value: 'cygnus-class',
-    state: {
-      gravity_category: 'microgravity',
-      gravity_g: 0.0001,
-      oxygen_pct: 21,
-      total_pressure_kpa: 101.3,
-      airflow_cm_s: 25,
-      flow_direction: 'concurrent',
-      material_family: 'pmma',
-      materialType: 'PMMA slab',
-      geometry: 'flat-sheet',
-      thickness_mm: 1.5,
-    },
-  },
-  {
-    label: 'Lunar Habitat',
-    value: 'lunar-habitat',
-    state: {
-      gravity_category: 'lunar',
-      gravity_g: 0.16,
-      oxygen_pct: 21,
-      total_pressure_kpa: 50,
-      airflow_cm_s: 20,
-      flow_direction: 'concurrent',
-      material_family: 'sib',
-      materialType: 'SIBAL fabric',
-      geometry: 'flat-sheet',
-      thickness_mm: 2.1,
-    },
-  },
-  {
-    label: 'Mars Transit',
-    value: 'mars-transit',
-    state: {
-      gravity_category: 'mars',
-      gravity_g: 0.38,
-      oxygen_pct: 21,
-      total_pressure_kpa: 50,
-      airflow_cm_s: 20,
-      flow_direction: 'concurrent',
-      material_family: 'pmma',
-      materialType: 'PMMA slab',
-      geometry: 'flat-sheet',
-      thickness_mm: 2.0,
-    },
-  },
-  {
-    label: 'Custom',
-    value: 'custom',
-    state: {
-      gravity_category: 'microgravity',
-      gravity_g: 0.0001,
-      oxygen_pct: 21,
-      total_pressure_kpa: 101.3,
-      airflow_cm_s: 20,
-      flow_direction: 'concurrent',
-      material_family: 'sib',
-      materialType: 'SIBAL fabric',
-      geometry: 'flat-sheet',
-      thickness_mm: 2.0,
-    },
-  },
-];
 
 const GRAVITY_CATEGORIES: { value: GravityCategory; label: string }[] = [
   { value: 'microgravity', label: 'Microgravity (0.0001 g)' },
