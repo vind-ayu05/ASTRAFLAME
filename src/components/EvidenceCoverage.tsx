@@ -1,6 +1,7 @@
 // EvidenceCoverage: renders SEDResult for a scenario.
 // NEVER mixes gravity categories or flow directions (cohort is locked by design).
 
+import { useState } from 'react';
 import { AlertTriangle, CheckCircle2, Info, Printer, XCircle } from 'lucide-react';
 import { computeSED } from '../lib/sed-engine.ts';
 import type { SEDInput } from '../lib/sed-engine.ts';
@@ -14,6 +15,7 @@ import { Link } from 'react-router-dom';
 import { formatMaybe } from '../lib/format.ts';
 import type { ExperimentRecord } from '../types/index.ts';
 import { ExplanationPanel } from './ExplanationPanel.tsx';
+import { EvidenceReportModal } from './EvidenceReportModal.tsx';
 
 interface EvidenceCoverageProps {
   scenario: SEDInput;
@@ -38,6 +40,7 @@ function rankRecord(record: ExperimentRecord, result: ReturnType<typeof computeS
 const RANK_LABELS = ['Direct match', 'Similar', 'Contextual'];
 
 export function EvidenceCoverage({ scenario }: EvidenceCoverageProps) {
+  const [reportOpen, setReportOpen] = useState(false);
   const result = computeSED(scenario, records);
   const { coverage, axes, categorical, matchingRecordIds } = result;
   const meta = COVERAGE_META[coverage];
@@ -67,7 +70,7 @@ export function EvidenceCoverage({ scenario }: EvidenceCoverageProps) {
         </div>
         <button
           type="button"
-          onClick={() => window.print()}
+          onClick={() => setReportOpen(true)}
           aria-label="Export evidence brief (print)"
           className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-subtle px-3 py-1.5 text-xs text-text-secondary hover:text-text-primary"
         >
@@ -75,6 +78,15 @@ export function EvidenceCoverage({ scenario }: EvidenceCoverageProps) {
           <span>Export brief</span>
         </button>
       </div>
+      {reportOpen && (
+        <EvidenceReportModal
+          open={reportOpen}
+          onClose={() => setReportOpen(false)}
+          scenario={scenario}
+          result={result}
+          records={cohortRecords.map((c) => c.record)}
+        />
+      )}
 
       {/* Evidence coverage explanation panel */}
       <ExplanationPanel

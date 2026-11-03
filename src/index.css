@@ -154,6 +154,12 @@ body {
   box-shadow: var(--card-shadow);
 }
 
+@media print {
+  body > * { display: none !important; }
+  .report-content { display: block !important; }
+  .report-print-hide { display: none !important; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
