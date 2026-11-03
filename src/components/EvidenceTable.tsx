@@ -1,0 +1,96 @@
+// EvidenceTable: desktop table view of ExperimentRecords.
+// Supports selecting up to 3 records for comparison with a hard-stop warning
+// if selected records mix gravity_category or mix concurrent/opposed flow.
+
+import { Link } from 'react-router-dom';
+import type { ExperimentRecord } from '../types/index.ts';
+import { formatMaybe } from '../lib/format.ts';
+import { TierBadge } from './TierBadge.tsx';
+import { SourceButton } from './SourcePanel.tsx';
+
+interface EvidenceTableProps {
+  records: ExperimentRecord[];
+  selectedIds: string[];
+  onToggleSelect: (id: string) => void;
+  selectionWarning?: string;
+}
+
+export function EvidenceTable({ records, selectedIds, onToggleSelect, selectionWarning }: EvidenceTableProps) {
+  return (
+    <div className="overflow-x-auto">
+      {selectionWarning && (
+        <p role="alert" className="mb-3 text-sm font-medium text-brand-orange">
+          {selectionWarning}
+        </p>
+      )}
+      <table className="w-full border-separate border-spacing-0 text-sm" aria-label="Evidence records">
+        <thead>
+          <tr className="text-left">
+            {['', 'Sample ID', 'Investigation', 'Material', 'Geometry', 'Gravity', 'O₂', 'Pressure', 'Airflow', 'Flow', 'Spread rate', 'Outcome', 'Tier', 'Source'].map((h) => (
+              <th
+                key={h}
+                scope="col"
+                className="border-b border-subtle px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-text-muted"
+              >
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {records.map((record) => {
+            const selected = selectedIds.includes(record.record_id);
+            return (
+              <tr
+                key={record.record_id}
+                className={`transition-colors hover:bg-bg-elevated ${selected ? 'bg-bg-elevated ring-inset ring-1 ring-brand-orange/30' : ''}`}
+              >
+                <td className="border-b border-subtle px-3 py-2">
+                  <button
+                    type="button"
+                    onClick={() => onToggleSelect(record.record_id)}
+                    aria-pressed={selected}
+                    aria-label={selected ? `Deselect ${record.record_id}` : `Select ${record.record_id} for comparison`}
+                    className={`h-4 w-4 rounded border transition-colors ${selected ? 'border-brand-orange bg-brand-orange' : 'border-subtle bg-bg-card'}`}
+                  />
+                </td>
+                <td className="border-b border-subtle px-3 py-2">
+                  <Link
+                    to={`/evidence/${record.record_id}`}
+                    className="font-mono font-medium text-brand-orange hover:underline"
+                  >
+                    {record.record_id}
+                  </Link>
+                </td>
+                <td className="border-b border-subtle px-3 py-2 text-text-secondary">{record.investigation}</td>
+                <td className="border-b border-subtle px-3 py-2 text-text-secondary">{record.material_type}</td>
+                <td className="border-b border-subtle px-3 py-2 text-text-secondary">{record.geometry}</td>
+                <td className="border-b border-subtle px-3 py-2 font-mono text-xs text-text-secondary">{record.gravity_category} ({record.gravity_g}g)</td>
+                <td className="border-b border-subtle px-3 py-2 font-mono text-xs text-text-secondary">{formatMaybe(record.oxygen_pct, '%')}</td>
+                <td className="border-b border-subtle px-3 py-2 font-mono text-xs text-text-secondary">{formatMaybe(record.total_pressure_kpa, 'kPa')}</td>
+                <td className="border-b border-subtle px-3 py-2 font-mono text-xs text-text-secondary">{formatMaybe(record.airflow_cm_s, 'cm/s')}</td>
+                <td className="border-b border-subtle px-3 py-2 text-text-secondary">{record.flow_direction}</td>
+                <td className="border-b border-subtle px-3 py-2 font-mono text-xs text-text-secondary">
+                  <span className="flex items-center gap-1">
+                    {formatMaybe(record.spread_rate_mm_s, 'mm/s')}
+                    <SourceButton sourceId={record.source_id} label="spread rate" />
+                  </span>
+                </td>
+                <td className="border-b border-subtle px-3 py-2 text-text-secondary">{record.outcome}</td>
+                <td className="border-b border-subtle px-3 py-2">
+                  <TierBadge tier={record.tier} />
+                </td>
+                <td className="border-b border-subtle px-3 py-2">
+                  <SourceButton sourceId={record.source_id} label={record.record_id} />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      {records.length === 0 && (
+        <p className="py-8 text-center text-sm text-text-muted">No records match the current filters.</p>
+      )}
+    </div>
+  );
+}
