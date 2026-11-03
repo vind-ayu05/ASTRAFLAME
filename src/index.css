@@ -13,6 +13,13 @@
   --text-muted: #747A84;
   --brand-orange: #FF6B2C;
   --brand-orange-2: #FF913D;
+
+  /* Design-system derived tokens (kept theme-aware below). */
+  --star-field-color: rgba(244, 242, 238, 0.05);
+  --hatch-color: rgba(116, 122, 132, 0.45);
+  --card-border: rgba(116, 122, 132, 0.22);
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.18), 0 6px 16px rgba(0, 0, 0, 0.14);
+  --focus-ring: var(--brand-orange);
 }
 
 [data-theme='light'] {
@@ -26,6 +33,13 @@
   --text-muted: #5B6470;
   --brand-orange: #FF6B2C;
   --brand-orange-2: #FF913D;
+
+  /* Derived tokens adjusted for light surfaces. */
+  --star-field-color: rgba(9, 11, 14, 0.05);
+  --hatch-color: rgba(91, 100, 112, 0.4);
+  --card-border: rgba(9, 11, 14, 0.14);
+  --card-shadow: 0 1px 2px rgba(9, 11, 14, 0.06), 0 6px 16px rgba(9, 11, 14, 0.08);
+  --focus-ring: var(--brand-orange);
 }
 
 body {
@@ -35,6 +49,109 @@ body {
   font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* --------------------------------------------------------------------------
+ * Design-system utilities
+ *
+ * Container convention: page content is centered with a max content width of
+ * 1440px and responsive horizontal padding. Apply via the `.container-page`
+ * utility below, or with Tailwind `max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8`
+ * directly on a layout wrapper. The desktop nav is the same max width so the
+ * content column stays aligned across the app.
+ * ------------------------------------------------------------------------ */
+
+.container-page {
+  width: 100%;
+  max-width: 1440px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+@media (min-width: 640px) {
+  .container-page { padding-left: 1.5rem; padding-right: 1.5rem; }
+}
+@media (min-width: 1024px) {
+  .container-page { padding-left: 2rem; padding-right: 2rem; }
+}
+
+/* Star-field background: scattered low-opacity dots over the primary surface.
+   Theme-aware via --star-field-color (subtle light dots on dark, faint dark
+   dots on light). Tiled so it repeats seamlessly; no external image. */
+.star-field {
+  background-color: var(--bg-primary);
+  background-image:
+    radial-gradient(1px 1px at 20px 30px, var(--star-field-color), transparent),
+    radial-gradient(1px 1px at 60px 110px, var(--star-field-color), transparent),
+    radial-gradient(1.5px 1.5px at 120px 50px, var(--star-field-color), transparent),
+    radial-gradient(1px 1px at 180px 90px, var(--star-field-color), transparent),
+    radial-gradient(1px 1px at 240px 160px, var(--star-field-color), transparent),
+    radial-gradient(1.5px 1.5px at 300px 60px, var(--star-field-color), transparent),
+    radial-gradient(1px 1px at 340px 130px, var(--star-field-color), transparent);
+  background-repeat: repeat;
+  background-size: 360px 200px;
+}
+
+/* Diagonal hatch pattern for "not tested" / no-evidence surfaces. Uses grey
+   (--hatch-color, derived from --text-muted) — never blue. Pair with an
+   explicit text label/icon; colour is never the sole signal. */
+.hatch {
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--hatch-color) 0,
+    var(--hatch-color) 2px,
+    transparent 2px,
+    transparent 7px
+  );
+}
+
+/* Base card surface: subtle 1px border, ~12px radius, soft shadow on the card
+   background. Compose with padding/spacing utilities in components. */
+.card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+}
+
+/* Subtle border colour helper for non-card surfaces (badges, dividers, inputs).
+   Use with a Tailwind width utility, e.g. `border border-subtle`. */
+.border-subtle {
+  border-color: var(--card-border);
+}
+
+/* Brand-orange focus ring for keyboard users. Applied only on :focus-visible
+   so mouse/pointer interactions are not visually noisy. */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Skip link: visually hidden until focused by keyboard, then revealed at the
+   top-left. The target id="main" is provided by the app shell (FEAT-003). */
+.skip-link {
+  position: absolute;
+  left: -1000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: 1000;
+}
+.skip-link:focus {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  width: auto;
+  height: auto;
+  padding: 0.5rem 1rem;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
 }
 
 @media (prefers-reduced-motion: reduce) {
