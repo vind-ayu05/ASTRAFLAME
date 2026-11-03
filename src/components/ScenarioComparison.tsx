@@ -223,11 +223,11 @@ export function ScenarioComparison() {
       </div>
 
       {/* What differs summary */}
-      {differingAxes.length > 0 && (
-        <div className="card p-5">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-text-secondary">
-            What differs
-          </p>
+      <div className="card p-5">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-text-secondary">
+          What differs
+        </p>
+        {differingAxes.length > 0 ? (
           <ul className="flex flex-wrap gap-2" aria-label="Axes where scenarios differ">
             {differingAxes.map(({ key, label }) => (
               <li
@@ -239,20 +239,10 @@ export function ScenarioComparison() {
               </li>
             ))}
           </ul>
-          {differingAxes.length === 0 && (
-            <p className="text-sm text-text-muted">All parameters are identical.</p>
-          )}
-        </div>
-      )}
-
-      {differingAxes.length === 0 && (
-        <div className="card p-5">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-text-secondary">
-            What differs
-          </p>
+        ) : (
           <p className="text-sm text-text-muted">All parameters are identical between the two scenarios.</p>
-        </div>
-      )}
+        )}
+      </div>
 
     </section>
   );

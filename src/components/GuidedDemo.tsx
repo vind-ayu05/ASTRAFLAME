@@ -20,6 +20,16 @@ export function GuidedDemo() {
     navigate(currentStep.route);
   }, [active, currentStep.route, navigate]);
 
+  // Close on Escape key.
+  useEffect(() => {
+    if (!active) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') stop();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [active, stop]);
+
   if (!active) return null;
 
   const isFirst = stepIndex === 0;

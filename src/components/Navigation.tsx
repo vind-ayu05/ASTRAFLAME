@@ -20,6 +20,7 @@ import {
   MessageCircle,
   Scale,
   ScrollText,
+  Shield,
   Target,
   X,
 } from 'lucide-react';
@@ -41,6 +42,7 @@ const LINKS: NavItem[] = [
   { to: '/evidence', label: 'Evidence', icon: FileText },
   { to: '/ledger', label: 'Ledger', icon: Scale },
   { to: '/gaps', label: 'Gaps', icon: LayoutGrid },
+  { to: '/crew-hazard', label: 'Crew Hazard', icon: Shield },
   { to: '/ask', label: 'Ask', icon: MessageCircle },
   { to: '/methodology', label: 'Methodology', icon: ScrollText },
   { to: '/next-experiment', label: 'Next Exp.', icon: FlaskConical },
