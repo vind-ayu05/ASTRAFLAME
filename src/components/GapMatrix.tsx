@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { records } from '../data/records.ts';
+import { useDatabase } from '../context/DatabaseContext.tsx';
 import { isMissing } from '../lib/format.ts';
 import { TierBadge } from './TierBadge.tsx';
 import { ReviewBadge } from './ReviewBadge.tsx';
@@ -50,8 +51,8 @@ interface CellData {
   tier2: number;
 }
 
-function getCell(gravity: GravityCategory, atmo: AtmoColumn, material: MaterialFamily): CellData {
-  const matched = records.filter(
+function getCell(gravity: GravityCategory, atmo: AtmoColumn, material: MaterialFamily, sourceRecords: ExperimentRecord[]): CellData {
+  const matched = sourceRecords.filter(
     (r) => r.gravity_category === gravity && r.material_family === material && matchAtmo(r, atmo),
   );
   return { records: matched, tier1: matched.filter((r) => r.tier === 1).length, tier2: matched.filter((r) => r.tier === 2).length };
@@ -65,6 +66,8 @@ interface PanelState {
 }
 
 export function GapMatrix() {
+  const { records: dbRecords } = useDatabase();
+  const allRecords = dbRecords.length > 0 ? dbRecords : records;
   const [panel, setPanel] = useState<PanelState | null>(null);
 
   return (
@@ -94,7 +97,7 @@ export function GapMatrix() {
                     {grav.label}
                   </th>
                   {ATMO_COLS.map((atmo) => {
-                    const cell = getCell(grav.value, atmo, material);
+                    const cell = getCell(grav.value, atmo, material, allRecords);
                     const hasEvidence = cell.records.length > 0;
                     return (
                       <td key={atmo.label} className="border-b border-subtle px-3 py-2">

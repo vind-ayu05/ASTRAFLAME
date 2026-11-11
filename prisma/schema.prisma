@@ -1,0 +1,167 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email     String     @unique
+  name      String?
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  scenarios Scenario[]
+  auditLogs AuditLog[]
+
+  @@map("users")
+}
+
+model Experiment {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title           String           @unique
+  description     String?
+  experimentType  String?          @map("experiment_type")
+  status          String           @default("completed")
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  evidenceRecords EvidenceRecord[]
+
+  @@map("experiments")
+}
+
+model Source {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourceId        String           @unique @map("source_id")
+  title           String
+  authors         String?
+  year            Int?
+  ntrsId          String?          @map("ntrs_id")
+  doi             String?
+  pageRef         String?          @map("page_ref")
+  tableRef        String?          @map("table_ref")
+  url             String?
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  evidenceRecords EvidenceRecord[]
+
+  @@map("sources")
+}
+
+model Material {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  family          String
+  name            String
+  description     String?
+  properties      Json?            @default("{}")
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  evidenceRecords EvidenceRecord[]
+
+  @@map("materials")
+}
+
+model EvidenceRecord {
+  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recordId          String        @unique @map("record_id")
+  experimentId      String?       @map("experiment_id") @db.Uuid
+  investigation     String
+  sampleId          String        @map("sample_id")
+  materialFamily    String        @map("material_family")
+  materialType      String        @map("material_type")
+  materialId        String?       @map("material_id") @db.Uuid
+  geometry          String
+  gravityCategory   String        @map("gravity_category")
+  gravityG          Float         @map("gravity_g")
+  oxygenPct         Json          @map("oxygen_pct")
+  totalPressureKpa  Json          @map("total_pressure_kpa")
+  airflowCmS        Json          @map("airflow_cm_s")
+  flowDirection     String        @map("flow_direction")
+  thicknessMm       Json          @map("thickness_mm")
+  widthCm           Json?         @map("width_cm")
+  lengthCm          Json?         @map("length_cm")
+  freeVolumeM3      Json?         @map("free_volume_m3")
+  spreadRateMmS     Json          @map("spread_rate_mm_s")
+  burnLengthCm      Json?         @map("burn_length_cm")
+  heatReleasePeakW  Json?         @map("heat_release_peak_w")
+  coIncreasePpm     Json?         @map("co_increase_ppm")
+  co2IncreasePpm    Json?         @map("co2_increase_ppm")
+  outcome           String
+  confidence        String
+  tier              Int
+  reviewStatus      String        @map("review_status")
+  sourceId          String        @map("source_id")
+  sourceUuid        String?       @map("source_uuid") @db.Uuid
+  notes             String?
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  experiment   Experiment?   @relation(fields: [experimentId], references: [id], onDelete: SetNull)
+  material     Material?     @relation(fields: [materialId], references: [id], onDelete: SetNull)
+  source       Source?       @relation(fields: [sourceUuid], references: [id], onDelete: SetNull)
+  measurements Measurement[]
+
+  @@index([gravityCategory])
+  @@index([materialFamily])
+  @@index([sourceId])
+  @@map("evidence_records")
+}
+
+model Measurement {
+  id               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recordId         String          @map("record_id")
+  evidenceRecordId String?         @map("evidence_record_id") @db.Uuid
+  parameterName    String          @map("parameter_name")
+  parameterValue   Float?          @map("parameter_value")
+  missingState     String?         @map("missing_state")
+  unit             String
+  recordedAt       DateTime        @default(now()) @map("recorded_at") @db.Timestamptz(6)
+  evidenceRecord   EvidenceRecord? @relation(fields: [evidenceRecordId], references: [id], onDelete: Cascade)
+
+  @@index([recordId])
+  @@index([parameterName])
+  @@map("measurements")
+}
+
+model Scenario {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title            String
+  description      String?
+  gravityCategory  String   @map("gravity_category")
+  gravityG         Float    @map("gravity_g")
+  oxygenPct        Float    @map("oxygen_pct")
+  totalPressureKpa Float    @map("total_pressure_kpa")
+  airflowCmS       Float    @map("airflow_cm_s")
+  flowDirection    String   @map("flow_direction")
+  materialFamily   String   @map("material_family")
+  materialType     String   @map("material_type")
+  geometry         String
+  thicknessMm      Float    @map("thickness_mm")
+  configuration    Json?    @default("{}")
+  userId           String?  @map("user_id") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("scenarios")
+}
+
+model AuditLog {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String?  @map("user_id") @db.Uuid
+  action    String
+  tableName String   @map("table_name")
+  recordId  String   @map("record_id")
+  details   Json?    @default("{}")
+  ipAddress String?  @map("ip_address")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tableName])
+  @@index([recordId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+

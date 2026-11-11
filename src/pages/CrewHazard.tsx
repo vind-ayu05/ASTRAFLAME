@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { records } from '../data/records.ts';
+import { useDatabase } from '../context/DatabaseContext.tsx';
 import { isMissing, formatMaybe } from '../lib/format.ts';
 import { SourceButton } from '../components/SourcePanel.tsx';
 import { ScientificDisclaimer } from '../components/ScientificDisclaimer.tsx';
@@ -31,11 +32,21 @@ const SMOKE_DATA = [
 interface ChartEntry { name: string; CO: number; CO2: number }
 
 export function CrewHazard() {
+  const { records: dbRecords } = useDatabase();
+  const allRecords = dbRecords.length > 0 ? dbRecords : records;
+
   const [volume, setVolume] = useState(REF_VOLUME);
+
+  const viRecords = allRecords.filter(
+    (r): r is ExperimentRecord & { co_increase_ppm: number; co2_increase_ppm: number } =>
+      r.investigation === 'Saffire-VI' &&
+      !isMissing(r.co_increase_ppm) &&
+      !isMissing(r.co2_increase_ppm),
+  );
 
   const scaleFactor = REF_VOLUME / Math.max(volume, 0.1);
 
-  const chartData: ChartEntry[] = VI_RECORDS.map((r) => ({
+  const chartData: ChartEntry[] = viRecords.map((r) => ({
     name: r.record_id,
     CO:  Math.round((r.co_increase_ppm as number) * scaleFactor),
     CO2: Math.round((r.co2_increase_ppm as number) * scaleFactor),

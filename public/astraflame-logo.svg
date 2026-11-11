@@ -1,0 +1,162 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 220" fill="none">
+  <defs>
+    <!-- Orbital arc: white top → orange bottom -->
+    <linearGradient id="arcG" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%"   stop-color="#FFFFFF" stop-opacity="1"/>
+      <stop offset="60%"  stop-color="#FFD0A0" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#FF6B2C" stop-opacity="1"/>
+    </linearGradient>
+
+    <!-- Bottom horizon arc: white center → transparent edges -->
+    <linearGradient id="horizG" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#FFFFFF" stop-opacity="0"/>
+      <stop offset="30%"  stop-color="#FFFFFF" stop-opacity="0.9"/>
+      <stop offset="50%"  stop-color="#FFFFFF" stop-opacity="1"/>
+      <stop offset="70%"  stop-color="#FFFFFF" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Flame body: yellow → amber → deep orange -->
+    <linearGradient id="flameG" x1="40%" y1="0%" x2="60%" y2="100%">
+      <stop offset="0%"   stop-color="#FFE84A"/>
+      <stop offset="28%"  stop-color="#FFAA20"/>
+      <stop offset="65%"  stop-color="#FF6B2C"/>
+      <stop offset="100%" stop-color="#C84000"/>
+    </linearGradient>
+
+    <!-- Flame inner highlight -->
+    <linearGradient id="flameHG" x1="40%" y1="0%" x2="60%" y2="100%">
+      <stop offset="0%"   stop-color="#FFEE88"/>
+      <stop offset="100%" stop-color="#FF9900" stop-opacity="0.3"/>
+    </linearGradient>
+
+    <!-- Star spark radial -->
+    <radialGradient id="starG" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#FFE84A"/>
+      <stop offset="60%"  stop-color="#FF9900"/>
+      <stop offset="100%" stop-color="#FF6B2C" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Orange glow under flame base -->
+    <radialGradient id="glowG" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#FF6B2C" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#FF6B2C" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Glow filter for flame and arc -->
+    <filter id="fglow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="2.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- Softer outer glow for the arc -->
+    <filter id="arcglow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- ── SYMBOL (centred at ~105, 100) ─────────────────────────────── -->
+
+  <!-- Orbital arc: large right-side crescent, sweeping from top-left down to bottom-right -->
+  <path
+    d="M 78 28 A 62 62 0 1 1 78 172"
+    stroke="url(#arcG)"
+    stroke-width="7"
+    stroke-linecap="round"
+    fill="none"
+    filter="url(#arcglow)"
+    opacity="0.96"
+  />
+
+  <!-- Bottom horizon arc (flat platform line) -->
+  <path
+    d="M 50 154 Q 105 143 160 154"
+    stroke="url(#horizG)"
+    stroke-width="4"
+    stroke-linecap="round"
+    fill="none"
+    opacity="0.95"
+  />
+
+  <!-- Orange base glow (warm light at base of flame) -->
+  <ellipse cx="105" cy="155" rx="26" ry="9" fill="url(#glowG)" opacity="0.7"/>
+
+  <!-- Left flame (leaning slightly left, smaller) -->
+  <path
+    d="M 96 154
+       C 84 138, 80 118, 88 96
+       C 92 86, 98 82, 100 90
+       C 102 100, 99 120, 99 138
+       C 99 146, 98 151, 96 154 Z"
+    fill="url(#flameG)"
+    filter="url(#fglow)"
+    opacity="0.88"
+  />
+
+  <!-- Right flame (taller, dominant) -->
+  <path
+    d="M 108 154
+       C 100 136, 97 112, 106 82
+       C 110 68, 118 62, 121 72
+       C 124 84, 119 110, 116 130
+       C 114 142, 111 150, 108 154 Z"
+    fill="url(#flameG)"
+    filter="url(#fglow)"
+  />
+
+  <!-- Inner bright seam between the two flames -->
+  <path
+    d="M 103 152
+       C 100 136, 99 114, 103 90
+       C 104 84, 106 80, 107 88
+       C 108 100, 106 128, 103 152 Z"
+    fill="url(#flameHG)"
+    opacity="0.55"
+  />
+
+  <!-- 4-point star spark (upper-left area) -->
+  <g filter="url(#fglow)">
+    <path
+      d="M 79 70 L 82 77 L 89 80 L 82 83 L 79 90 L 76 83 L 69 80 L 76 77 Z"
+      fill="url(#starG)"
+      opacity="0.97"
+    />
+    <!-- Star centre dot -->
+    <circle cx="79" cy="80" r="2.2" fill="#FFE84A" opacity="0.95"/>
+  </g>
+
+  <!-- ── WORDMARK ──────────────────────────────────────────────────── -->
+
+  <!-- Vertical divider -->
+  <line x1="178" y1="80" x2="178" y2="140"
+    stroke="#747A84" stroke-width="1" opacity="0.35"/>
+
+  <!-- ASTRAFLAME — bold, wide tracking, off-white -->
+  <text
+    x="192" y="119"
+    font-family="'Space Grotesk', 'Inter', Arial, sans-serif"
+    font-size="42"
+    font-weight="700"
+    fill="#F4F2EE"
+    letter-spacing="5"
+  >ASTRAFLAME</text>
+
+  <!-- Orange left dash -->
+  <line x1="192" y1="136" x2="212" y2="136"
+    stroke="#FF6B2C" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- Descriptor text — spaced uppercase, muted -->
+  <text
+    x="218" y="140"
+    font-family="'Inter', Arial, sans-serif"
+    font-size="11"
+    font-weight="400"
+    fill="#A4A7AD"
+    letter-spacing="3.5"
+  >SPACECRAFT FIRE EVIDENCE INTELLIGENCE</text>
+
+  <!-- Orange right dash -->
+  <line x1="536" y1="136" x2="556" y2="136"
+    stroke="#FF6B2C" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

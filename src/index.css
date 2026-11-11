@@ -170,3 +170,110 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* ============================================================
+ * HERO SECTION STYLES
+ * Full-bleed dark space atmosphere with layered backgrounds,
+ * orbital ring decoration, and staggered fade-slide animations.
+ * ============================================================ */
+
+/* Deep space base gradient */
+.hero-section {
+  background-color: var(--bg-primary);
+  min-height: 90vh;
+}
+
+.hero-bg {
+  background: radial-gradient(
+    ellipse 140% 80% at 50% -10%,
+    rgba(255, 107, 44, 0.08) 0%,
+    rgba(9, 11, 14, 0.0) 60%
+  ),
+  linear-gradient(
+    180deg,
+    #090B0E 0%,
+    #0D1117 40%,
+    #090B0E 100%
+  );
+}
+
+/* Warm orange radial glow centred behind the logo */
+.hero-glow {
+  background: radial-gradient(
+    circle 400px at 50% 30%,
+    rgba(255, 107, 44, 0.07) 0%,
+    transparent 70%
+  );
+}
+
+/* Large decorative orbital ring (not the logo ring) */
+.hero-orbit-ring {
+  width: 600px;
+  height: 220px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 107, 44, 0.07);
+  transform: rotate(-15deg);
+  pointer-events: none;
+}
+
+@media (min-width: 1024px) {
+  .hero-orbit-ring {
+    width: 900px;
+    height: 320px;
+  }
+}
+
+/* bg-white/3 and bg-white/4 are non-standard — define as utilities */
+.bg-white\/3 {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+.bg-white\/4 {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+/* ============================================================
+ * STAGGERED FADE-SLIDE ANIMATIONS
+ * 4 delay tiers: 0ms / 120ms / 240ms / 360ms
+ * Respects prefers-reduced-motion (already handled above).
+ * ============================================================ */
+
+@keyframes astraFadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.anim-fade-1 {
+  animation: astraFadeSlideIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0ms both;
+}
+.anim-fade-2 {
+  animation: astraFadeSlideIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+.anim-fade-3 {
+  animation: astraFadeSlideIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) 240ms both;
+}
+.anim-fade-4 {
+  animation: astraFadeSlideIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) 360ms both;
+}
+
+/* ============================================================
+ * NAVIGATION ENHANCEMENTS
+ * Sticky nav gets a very subtle backdrop-blur on scroll.
+ * ============================================================ */
+header.sticky {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba(9, 11, 14, 0.88);
+}
+
+/* ============================================================
+ * INSTRUMENT SERIF font alias (hero headlines use font-serif)
+ * ============================================================ */
+.font-serif {
+  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+}

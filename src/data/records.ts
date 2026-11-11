@@ -2,10 +2,19 @@ import recordsRaw from './records.json';
 import type { ExperimentRecord } from '../types/index.ts';
 
 /**
- * The full seed dataset, cast to the typed interface. records.json is the
- * single source of truth; this module only attaches types and lookups.
+ * The full combustion dataset. Initialized with verified seed records,
+ * and synchronized dynamically with Supabase and PostgreSQL at runtime.
  */
-export const records: ExperimentRecord[] = recordsRaw as ExperimentRecord[];
+export const records: ExperimentRecord[] = [...(recordsRaw as ExperimentRecord[])];
+
+/**
+ * Updates the in-memory singleton records array with fresh data from the database.
+ * Mutates in-place so all existing imported references remain updated.
+ */
+export function setDynamicRecords(newRecords: ExperimentRecord[]): void {
+  records.length = 0;
+  records.push(...newRecords);
+}
 
 /** Look up a single record by its stable `record_id`. */
 export function getRecord(id: string): ExperimentRecord | undefined {

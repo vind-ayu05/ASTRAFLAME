@@ -382,7 +382,7 @@ export function ResearchAssistant() {
               </div>
 
               <aside className="rounded-lg border border-subtle bg-bg-elevated p-3 text-xs text-text-muted">
-                <strong className="font-medium text-text-secondary">Disclaimer:</strong> This response is generated from curated seed data using deterministic rules. It is decision support, not a certification or safety verdict. Not a substitute for NASA-STD-6001.
+                <strong className="font-medium text-text-secondary">Note:</strong> This response is generated from curated seed data using deterministic rules. Verify against cited sources before use.
               </aside>
 
               {response.data.followUp.length > 0 && (

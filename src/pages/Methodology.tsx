@@ -1,8 +1,6 @@
-// Methodology page: full methodology + challenge reference.
-// "Flame in Freefall" is allowed ONLY here and in the global footer.
+// Methodology page: scientific methods and data transparency.
 
 import { BrandLogo } from '../components/BrandLogo.tsx';
-import { ScientificDisclaimer } from '../components/ScientificDisclaimer.tsx';
 import { ExplanationPanel } from '../components/ExplanationPanel.tsx';
 
 const SECTIONS = [
@@ -60,11 +58,11 @@ export function Methodology() {
   return (
     <main id="main" aria-label="Methodology">
       <div className="container-page py-8">
-        <div className="mb-6 flex items-center gap-3">
-          <BrandLogo size={36} showWordmark={false} variant="symbol" />
+        <div className="mb-6 space-y-3">
+          <BrandLogo size={40} variant="horizontal" showDescriptor={true} />
           <div>
             <h1 className="font-display text-2xl font-semibold text-text-primary">Methodology</h1>
-            <p className="text-sm text-text-secondary">Evidence decision support, not a certification.</p>
+            <p className="text-sm text-text-secondary">Scientific methods and data transparency.</p>
           </div>
         </div>
 
@@ -83,10 +81,6 @@ export function Methodology() {
         </div>
 
         <footer className="mt-10 border-t border-subtle pt-6">
-          <ScientificDisclaimer />
-          <p className="mt-3 text-xs text-text-muted">
-            Built for NASA Space Apps Challenge 2026: Flame in Freefall.
-          </p>
         </footer>
       </div>
     </main>

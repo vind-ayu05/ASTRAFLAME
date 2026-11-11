@@ -1,35 +1,50 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
   <defs>
-    <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#FF6B2C" />
-      <stop offset="100%" stop-color="#FF913D" />
+    <linearGradient id="arcG" x1="60%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#FFFFFF"/>
+      <stop offset="55%"  stop-color="#FFD0A0"/>
+      <stop offset="100%" stop-color="#FF6B2C"/>
     </linearGradient>
-    <linearGradient id="flameGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#FF913D" />
-      <stop offset="100%" stop-color="#FF6B2C" />
+    <linearGradient id="flG" x1="45%" y1="0%" x2="55%" y2="100%">
+      <stop offset="0%"   stop-color="#FFE84A"/>
+      <stop offset="30%"  stop-color="#FFAA20"/>
+      <stop offset="65%"  stop-color="#FF6B2C"/>
+      <stop offset="100%" stop-color="#D94000"/>
     </linearGradient>
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="1.6" result="blur" />
-      <feMerge>
-        <feMergeNode in="blur" />
-        <feMergeNode in="SourceGraphic" />
-      </feMerge>
+    <linearGradient id="stG" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#FFE84A"/>
+      <stop offset="100%" stop-color="#FF8C00"/>
+    </linearGradient>
+    <filter id="gw" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
-  <circle
-    cx="32"
-    cy="32"
-    r="26"
-    fill="none"
-    stroke="url(#ringGrad)"
-    stroke-width="1.5"
-    stroke-linecap="round"
-    filter="url(#glow)"
-    opacity="0.9"
-  />
-  <path
-    d="M32 8 C 39 18, 39 26, 32 30 C 25 26, 25 18, 32 8 Z"
-    fill="url(#flameGrad)"
-    filter="url(#glow)"
-  />
+
+  <!-- Black background -->
+  <rect width="100" height="100" fill="#000000"/>
+
+  <!-- Orbital arc (right crescent) -->
+  <path d="M 50 8 A 42 42 0 1 1 50 92"
+    stroke="url(#arcG)" stroke-width="5.5" stroke-linecap="round" fill="none" opacity="0.95"/>
+
+  <!-- Bottom horizon arc -->
+  <path d="M 10 74 Q 50 66 90 74"
+    stroke="white" stroke-width="3.2" stroke-linecap="round" fill="none" opacity="0.92"/>
+
+  <!-- Left flame -->
+  <path d="M 44 70 C 36 58,34 44,40 32 C 43 26,47 24,48 28 C 49 34,46 44,46 54 C 46 60,46 66,44 70 Z"
+    fill="url(#flG)" filter="url(#gw)" opacity="0.90"/>
+
+  <!-- Right flame (dominant) -->
+  <path d="M 50 70 C 44 56,43 40,50 22 C 53 14,58 12,60 18 C 62 26,58 40,56 54 C 55 62,52 67,50 70 Z"
+    fill="url(#flG)" filter="url(#gw)"/>
+
+  <!-- Flame highlight seam -->
+  <path d="M 49 68 C 47 58,46 46,49 32 C 50 28,51 26,52 30 C 53 38,51 54,49 68 Z"
+    fill="#FFE84A" opacity="0.35"/>
+
+  <!-- 4-point star spark -->
+  <path d="M 27 30 L 29 34 L 33 36 L 29 38 L 27 42 L 25 38 L 21 36 L 25 34 Z"
+    fill="url(#stG)" opacity="0.95"/>
 </svg>

@@ -4,6 +4,7 @@
 
 import { useState, useMemo } from 'react';
 import { records } from '../data/records.ts';
+import { useDatabase } from '../context/DatabaseContext.tsx';
 import { EvidenceTable } from '../components/EvidenceTable.tsx';
 import { EvidenceCard } from '../components/EvidenceCard.tsx';
 import { SourceDrawer } from '../components/SourcePanel.tsx';
@@ -46,6 +47,9 @@ const REVIEW_STATUS_OPTIONS: { value: ReviewStatusFilter; label: string }[] = [
 ];
 
 export function Evidence() {
+  const { records: dbRecords } = useDatabase();
+  const allRecords = dbRecords.length > 0 ? dbRecords : records;
+
   const [search, setSearch] = useState('');
   const [filterGravity, setFilterGravity] = useState<GravityCategory | ''>('');
   const [filterMaterial, setFilterMaterial] = useState<MaterialFamily | ''>('');
@@ -56,7 +60,7 @@ export function Evidence() {
   const [drawerSourceId, setDrawerSourceId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
-    return records.filter((r) => {
+    return allRecords.filter((r) => {
       if (filterGravity && r.gravity_category !== filterGravity) return false;
       if (filterMaterial && r.material_family !== filterMaterial) return false;
       if (filterTier && String(r.tier) !== filterTier) return false;
@@ -71,10 +75,10 @@ export function Evidence() {
       }
       return true;
     });
-  }, [search, filterGravity, filterMaterial, filterTier, reviewStatusFilter]);
+  }, [allRecords, search, filterGravity, filterMaterial, filterTier, reviewStatusFilter]);
 
   function toggleSelect(id: string) {
-    const check = canToggleSelect(selectedIds, id, records);
+    const check = canToggleSelect(selectedIds, id, allRecords);
     if (!check.allowed) {
       setSelectionWarning(check.warning ?? '');
       return;
@@ -136,7 +140,7 @@ export function Evidence() {
         </section>
 
         <p className="mb-3 text-sm text-text-muted">{filtered.length} record{filtered.length !== 1 ? 's' : ''}
-          {filtered.length !== records.length && (
+          {filtered.length !== allRecords.length && (
             <button
               type="button"
               onClick={() => {

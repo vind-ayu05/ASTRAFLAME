@@ -5,6 +5,7 @@
 import { Check, Minus, Plus } from 'lucide-react';
 import { isMissing, formatMaybe } from '../lib/format.ts';
 import { records } from '../data/records.ts';
+import { useDatabase } from '../context/DatabaseContext.tsx';
 import type { ExperimentRecord } from '../types/index.ts';
 import { BeginnerExplanation } from './BeginnerExplanation.tsx';
 
@@ -28,9 +29,9 @@ function classifyOutcome(ug: ExperimentRecord, oneG: ExperimentRecord): LedgerOu
   return 'More flammable in µg';
 }
 
-function buildLedger(): LedgerRow[] {
-  const microgravityRecords = records.filter((r) => r.gravity_category === 'microgravity');
-  const oneGRecords = records.filter((r) => r.gravity_category === '1g');
+function buildLedger(sourceRecords: ExperimentRecord[]): LedgerRow[] {
+  const microgravityRecords = sourceRecords.filter((r) => r.gravity_category === 'microgravity');
+  const oneGRecords = sourceRecords.filter((r) => r.gravity_category === '1g');
   const rows: LedgerRow[] = [];
 
   for (const ug of microgravityRecords) {
@@ -58,7 +59,9 @@ const OUTCOME_META: Record<LedgerOutcome, { icon: typeof Check; label: string }>
 };
 
 export function GravityLedger() {
-  const rows = buildLedger();
+  const { records: dbRecords } = useDatabase();
+  const allRecords = dbRecords.length > 0 ? dbRecords : records;
+  const rows = buildLedger(allRecords);
 
   return (
     <section aria-label="Gravity ledger" className="space-y-4">

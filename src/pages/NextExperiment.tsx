@@ -1,9 +1,11 @@
 // NextExperiment.tsx — Research gap recommendation interface.
 // Derives all data from existing records + PRESETS. No invented data.
 
+import { useMemo } from 'react';
 import { records } from '../data/records.ts';
+import { useDatabase } from '../context/DatabaseContext.tsx';
 import { PRESETS } from '../lib/presets.ts';
-import type { GravityCategory, MaterialFamily } from '../types/index.ts';
+import type { GravityCategory, MaterialFamily, ExperimentRecord } from '../types/index.ts';
 import { ExplanationPanel } from '../components/ExplanationPanel.tsx';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -52,14 +54,14 @@ const GRAVITY_LABELS: Record<GravityCategory, string> = {
 
 // ── Gap derivation logic ───────────────────────────────────────────────────
 
-function deriveGaps(): Gap[] {
+function deriveGaps(sourceRecords: ExperimentRecord[]): Gap[] {
   // 1. Unique gravity categories and material families from records.
   const gravityCategories = Array.from(
-    new Set(records.map((r) => r.gravity_category)),
+    new Set(sourceRecords.map((r) => r.gravity_category)),
   ) as GravityCategory[];
 
   const materialFamilies = Array.from(
-    new Set(records.map((r) => r.material_family)),
+    new Set(sourceRecords.map((r) => r.material_family)),
   ) as MaterialFamily[];
 
   const gaps: Gap[] = [];
@@ -67,7 +69,7 @@ function deriveGaps(): Gap[] {
   for (const gc of gravityCategories) {
     for (const mf of materialFamilies) {
       // 2a. Count existing records matching both.
-      const matching = records.filter(
+      const matching = sourceRecords.filter(
         (r) => r.gravity_category === gc && r.material_family === mf,
       );
       const recordCount = matching.length;
@@ -268,9 +270,10 @@ function GapCard({ gap }: { gap: Gap }) {
 
 // ── Page ───────────────────────────────────────────────────────────────────
 
-const gaps = deriveGaps();
-
 export function NextExperiment() {
+  const { records: dbRecords } = useDatabase();
+  const allRecords = dbRecords.length > 0 ? dbRecords : records;
+  const gaps = useMemo(() => deriveGaps(allRecords), [allRecords]);
   return (
     <main id="main" aria-label="Next experiment planner">
       <div className="container-page py-8">

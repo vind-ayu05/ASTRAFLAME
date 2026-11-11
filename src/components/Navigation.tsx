@@ -28,6 +28,7 @@ import type { LucideIcon } from 'lucide-react';
 import { BrandLogo } from './BrandLogo.tsx';
 import { ThemeToggle } from './ThemeToggle.tsx';
 import { BeginnerModeToggle } from './BeginnerModeToggle.tsx';
+import { DatabaseStatusBadge } from './DatabaseStatusBadge.tsx';
 
 interface NavItem {
   to: string;
@@ -85,7 +86,13 @@ export function Navigation() {
       <header className="sticky top-0 z-40 border-b border-subtle bg-bg-primary">
         <div className="container-page flex h-14 items-center justify-between gap-3">
           <Link to="/" aria-label="ASTRAFLAME home" className="flex items-center">
-            <BrandLogo size={28} />
+            {/* Compact on mobile (symbol only), horizontal with wordmark on desktop */}
+            <span className="md:hidden">
+              <BrandLogo size={30} variant="symbol" />
+            </span>
+            <span className="hidden md:flex">
+              <BrandLogo size={30} variant="compact" />
+            </span>
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
@@ -102,6 +109,7 @@ export function Navigation() {
           </nav>
 
           <div className="flex items-center gap-2">
+            <DatabaseStatusBadge />
             <ThemeToggle />
             <BeginnerModeToggle />
             <button

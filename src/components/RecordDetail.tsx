@@ -2,15 +2,17 @@
 // Two sections: "What this record shows" and "What this record does NOT show".
 // All missing values via formatMaybe (never 0). 404 if not found.
 
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { isMissing, formatMaybe } from '../lib/format.ts';
 import { getRecord, records } from '../data/records.ts';
+import { useDatabase } from '../context/DatabaseContext.tsx';
 import { TierBadge } from './TierBadge.tsx';
 import { ReviewBadge } from './ReviewBadge.tsx';
 import { SourcePanel } from './SourcePanel.tsx';
 import { BeginnerExplanation } from './BeginnerExplanation.tsx';
 import { ExplanationPanel } from './ExplanationPanel.tsx';
-import type { MaybeValue } from '../types/index.ts';
+import type { MaybeValue, ReviewStatus } from '../types/index.ts';
 
 interface RecordDetailProps {
   recordId: string;
@@ -33,7 +35,11 @@ function Row({ label, value, unit }: { label: string; value: MaybeValue<number> 
 }
 
 export function RecordDetail({ recordId }: RecordDetailProps) {
-  const record = getRecord(recordId);
+  const { records: liveRecords, updateRecord } = useDatabase();
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const allRecords = liveRecords.length > 0 ? liveRecords : records;
+  const record = allRecords.find((r) => r.record_id === recordId) || getRecord(recordId);
 
   if (!record) {
     return (
@@ -44,6 +50,17 @@ export function RecordDetail({ recordId }: RecordDetailProps) {
       </div>
     );
   }
+
+  const handleStatusChange = async (newStatus: ReviewStatus) => {
+    setIsUpdating(true);
+    try {
+      await updateRecord(record.record_id, { review_status: newStatus });
+    } catch (err) {
+      console.error('[RecordDetail] Error updating review status:', err);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   // Derive missing fields for "does NOT show" section
   const missingFields: string[] = [];
@@ -64,7 +81,7 @@ export function RecordDetail({ recordId }: RecordDetailProps) {
   }
 
   // Similar records: same cohort (material + geometry + gravity + flow), excluding self
-  const similar = records.filter(
+  const similar = allRecords.filter(
     (r) =>
       r.record_id !== record.record_id &&
       r.material_family === record.material_family &&
@@ -81,6 +98,23 @@ export function RecordDetail({ recordId }: RecordDetailProps) {
           <span className="font-mono text-lg font-bold text-text-primary">{record.record_id}</span>
           <TierBadge tier={record.tier} />
           <ReviewBadge status={record.review_status} />
+          <div className="ml-auto flex items-center gap-1.5">
+            <label htmlFor="edit-status" className="text-xs text-text-muted">
+              Verification:
+            </label>
+            <select
+              id="edit-status"
+              value={record.review_status}
+              disabled={isUpdating}
+              onChange={(e) => handleStatusChange(e.target.value as ReviewStatus)}
+              className="rounded border border-subtle bg-bg-elevated px-2 py-0.5 text-xs text-text-secondary hover:text-text-primary focus:outline-none"
+            >
+              <option value="draft">Draft</option>
+              <option value="source-checked">Source Checked</option>
+              <option value="values-verified">Values Verified</option>
+              <option value="approved">Approved</option>
+            </select>
+          </div>
         </div>
         <p className="text-sm text-text-secondary">{record.investigation} — {record.material_type}</p>
         {record.notes ? <p className="mt-1 text-xs italic text-text-muted">{record.notes}</p> : null}

@@ -6,6 +6,7 @@ import { AlertTriangle, CheckCircle2, Info, Printer, XCircle } from 'lucide-reac
 import { computeSED } from '../lib/sed-engine.ts';
 import type { SEDInput } from '../lib/sed-engine.ts';
 import { records } from '../data/records.ts';
+import { useDatabase } from '../context/DatabaseContext.tsx';
 import type { Coverage } from '../lib/sed-engine.ts';
 import { GapBar } from './GapBar.tsx';
 import { TierBadge } from './TierBadge.tsx';
@@ -40,13 +41,16 @@ function rankRecord(record: ExperimentRecord, result: ReturnType<typeof computeS
 const RANK_LABELS = ['Direct match', 'Similar', 'Contextual'];
 
 export function EvidenceCoverage({ scenario }: EvidenceCoverageProps) {
+  const { records: dbRecords } = useDatabase();
+  const allRecords = dbRecords.length > 0 ? dbRecords : records;
+
   const [reportOpen, setReportOpen] = useState(false);
-  const result = computeSED(scenario, records);
+  const result = computeSED(scenario, allRecords);
   const { coverage, axes, categorical, matchingRecordIds } = result;
   const meta = COVERAGE_META[coverage];
   const Icon = meta.icon;
 
-  const cohortRecords = records
+  const cohortRecords = allRecords
     .filter((r) => matchingRecordIds.includes(r.record_id))
     .map((r) => ({ record: r, rank: rankRecord(r, result) }))
     .sort((a, b) => a.rank - b.rank)

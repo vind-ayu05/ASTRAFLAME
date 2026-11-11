@@ -2,13 +2,15 @@
 // Reads ?preset=lunar-habitat on mount to preload the Lunar Habitat preset.
 // Emits a SEDInput-shaped scenario to the parent on every change.
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { SEDInput } from '../lib/sed-engine.ts';
 import type { FlowDirection, GravityCategory, Geometry, MaterialFamily } from '../types/index.ts';
 import { TechnicalTerm } from './TechnicalTerm.tsx';
 import { PRESETS } from '../lib/presets.ts';
+import { useDatabase } from '../context/DatabaseContext.tsx';
+import { Check, Database } from 'lucide-react';
 
 export interface ScenarioState extends SEDInput {
   /** Gravity in g — stored for display; not used by the SED engine directly. */
@@ -67,6 +69,9 @@ const selectCls = inputCls;
 
 export function ScenarioForm({ scenario, onChange }: ScenarioFormProps) {
   const [searchParams] = useSearchParams();
+  const { saveScenario, scenarios: dbScenarios } = useDatabase();
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
     const preset = searchParams.get('preset');
@@ -80,7 +85,54 @@ export function ScenarioForm({ scenario, onChange }: ScenarioFormProps) {
 
   function applyPreset(value: string) {
     const found = PRESETS.find((p) => p.value === value);
-    if (found) onChange(found.state);
+    if (found) {
+      onChange(found.state);
+      return;
+    }
+    const foundDb = dbScenarios.find((s) => s.id === value);
+    if (foundDb) {
+      onChange({
+        gravity_category: foundDb.gravity_category as GravityCategory,
+        gravity_g: foundDb.gravity_g,
+        oxygen_pct: foundDb.oxygen_pct,
+        total_pressure_kpa: foundDb.total_pressure_kpa,
+        airflow_cm_s: foundDb.airflow_cm_s,
+        flow_direction: foundDb.flow_direction as FlowDirection,
+        material_family: foundDb.material_family as MaterialFamily,
+        materialType: foundDb.material_type,
+        geometry: foundDb.geometry as Geometry,
+        thickness_mm: foundDb.thickness_mm,
+      });
+    }
+  }
+
+  async function handleSaveScenario() {
+    setIsSaving(true);
+    try {
+      await saveScenario({
+        title: scenario.materialType
+          ? `${scenario.materialType} (${scenario.gravity_category})`
+          : `Scenario ${scenario.gravity_category}`,
+        description: `Saved from Scenario Explorer at ${new Date().toLocaleTimeString()}`,
+        gravity_category: scenario.gravity_category,
+        gravity_g: scenario.gravity_g,
+        oxygen_pct: scenario.oxygen_pct,
+        total_pressure_kpa: scenario.total_pressure_kpa,
+        airflow_cm_s: scenario.airflow_cm_s,
+        flow_direction: scenario.flow_direction,
+        material_family: scenario.material_family,
+        material_type: scenario.materialType,
+        geometry: scenario.geometry,
+        thickness_mm: scenario.thickness_mm,
+        configuration: { saved_via: 'ASTRAFLAME UI' },
+      });
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2500);
+    } catch (err) {
+      console.error('[ScenarioForm] Error saving scenario:', err);
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   function patch(partial: Partial<ScenarioState>) {
@@ -102,6 +154,17 @@ export function ScenarioForm({ scenario, onChange }: ScenarioFormProps) {
               className="rounded-full border border-subtle bg-bg-elevated px-3 py-1 text-xs text-text-secondary transition-colors hover:bg-bg-card hover:text-text-primary"
             >
               {p.label}
+            </button>
+          ))}
+          {dbScenarios.slice(0, 3).map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => applyPreset(s.id)}
+              className="rounded-full border border-brand-orange/40 bg-brand-orange/10 px-3 py-1 text-xs text-brand-orange transition-colors hover:bg-brand-orange/20"
+              title={s.description || s.title}
+            >
+              ★ {s.title}
             </button>
           ))}
         </div>
@@ -250,6 +313,27 @@ export function ScenarioForm({ scenario, onChange }: ScenarioFormProps) {
           />
         )}
       </fieldset>
+
+      <div className="pt-1">
+        <button
+          type="button"
+          onClick={handleSaveScenario}
+          disabled={isSaving}
+          className="flex w-full items-center justify-center gap-2 rounded-md border border-subtle bg-bg-card py-2 px-3 text-xs font-medium text-text-primary transition-colors hover:bg-bg-elevated hover:text-brand-orange disabled:opacity-50"
+        >
+          {saveSuccess ? (
+            <>
+              <Check size={14} className="text-emerald-400" />
+              <span className="text-emerald-400 font-medium">Saved to Database</span>
+            </>
+          ) : (
+            <>
+              <Database size={14} className="text-brand-orange" />
+              <span>{isSaving ? 'Saving to Database...' : 'Save Scenario to Database'}</span>
+            </>
+          )}
+        </button>
+      </div>
     </aside>
   );
 }
