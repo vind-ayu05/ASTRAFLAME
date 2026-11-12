@@ -57,3 +57,4 @@ CREATE TABLE IF NOT EXISTS analytics_sync_log (
 
 CREATE INDEX IF NOT EXISTS idx_sync_log_source ON analytics_sync_log(source_record_id, entity_type);
 CREATE INDEX IF NOT EXISTS idx_sync_log_hash ON analytics_sync_log(payload_hash);
+

@@ -16,7 +16,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:integration": "node ./node_modules/tsx/dist/cli.mjs server/test_fe_be_integration.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",

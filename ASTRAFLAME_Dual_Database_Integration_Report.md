@@ -165,3 +165,4 @@ npm run db:migrate
 # Apply Secondary Analytical migrations (reporting tables, flammability aggregates)
 npm run db:migrate:secondary
 ```
+

@@ -1,8 +1,16 @@
 // ASTRAFLAME Database Service Layer
 // Orchestrates data synchronization between Supabase, PostgreSQL backend API, and local client state.
+// All API operations route through the centralized apiClient gateway with automatic proxy and fail-safe fallbacks.
 
 import { supabase, isSupabaseConfigured } from '../lib/supabase.ts';
 import type { ExperimentRecord, SourceRecord } from '../types/index.ts';
+import {
+  evidenceAPI,
+  sourcesAPI,
+  scenariosAPI,
+  dashboardAPI,
+  healthAPI,
+} from './apiClient.ts';
 import rawRecords from '../data/records.json';
 import rawSources from '../data/sources.json';
 
@@ -32,6 +40,40 @@ export interface SavedScenario {
   created_at?: string;
 }
 
+// In-memory runtime scenarios cache
+const memoryScenarios: SavedScenario[] = [
+  {
+    id: 'preset-iss-cabin',
+    title: 'ISS Cabin (Nominal)',
+    description: 'International Space Station nominal atmosphere',
+    gravity_category: 'microgravity',
+    gravity_g: 0.0001,
+    oxygen_pct: 21,
+    total_pressure_kpa: 101.3,
+    airflow_cm_s: 20,
+    flow_direction: 'concurrent',
+    material_family: 'nomex',
+    material_type: 'Nomex HT90-40',
+    geometry: 'fabric',
+    thickness_mm: 0.4,
+  },
+  {
+    id: 'preset-artemis-eva',
+    title: 'Exploration Atmosphere (Artemis)',
+    description: 'NASA exploration atmosphere: 34% O2, 56.5 kPa (8.2 psia)',
+    gravity_category: 'lunar',
+    gravity_g: 0.166,
+    oxygen_pct: 34,
+    total_pressure_kpa: 56.5,
+    airflow_cm_s: 10,
+    flow_direction: 'opposed',
+    material_family: 'pmma',
+    material_type: 'Cast PMMA sheet',
+    geometry: 'flat-sheet',
+    thickness_mm: 6.35,
+  },
+];
+
 // ==============================================================================
 // 1. EVIDENCE RECORDS OPERATIONS
 // ==============================================================================
@@ -40,7 +82,7 @@ export interface SavedScenario {
  * Loads all evidence records from Supabase -> or Backend API -> or fallback seed data.
  */
 export async function getLiveRecords(): Promise<ExperimentRecord[]> {
-  // 1. Try Supabase Client
+  // 1. Try Supabase Client directly if configured
   if (isSupabaseConfigured && supabase) {
     try {
       const { data, error } = await supabase
@@ -56,17 +98,14 @@ export async function getLiveRecords(): Promise<ExperimentRecord[]> {
     }
   }
 
-  // 2. Try Backend API (Direct PostgreSQL / Prisma)
+  // 2. Try Backend API (Express + Prisma / PostgreSQL)
   try {
-    const res = await fetch('/api/evidence');
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-        return json.data as ExperimentRecord[];
-      }
+    const res = await evidenceAPI.getAll();
+    if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+      return res.data as ExperimentRecord[];
     }
   } catch (err) {
-    // API not running or unreachable
+    // API not reachable
   }
 
   // 3. Fallback to verified seed records
@@ -99,16 +138,9 @@ export async function createLiveRecord(record: ExperimentRecord): Promise<Experi
 
   // 2. Try Backend API
   try {
-    const res = await fetch('/api/evidence', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(record),
-    });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && json.data) {
-        return json.data as ExperimentRecord;
-      }
+    const res = await evidenceAPI.create(record);
+    if (res.success && res.data) {
+      return res.data as ExperimentRecord;
     }
   } catch (err) {
     console.warn('[DatabaseService] API insert error:', err);
@@ -144,16 +176,9 @@ export async function updateLiveRecord(
 
   // 2. Try Backend API
   try {
-    const res = await fetch(`/api/evidence/${encodeURIComponent(recordId)}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates),
-    });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && json.data) {
-        return json.data as ExperimentRecord;
-      }
+    const res = await evidenceAPI.update(recordId, updates);
+    if (res.success && res.data) {
+      return res.data as ExperimentRecord;
     }
   } catch (err) {
     console.warn('[DatabaseService] API update error:', err);
@@ -178,13 +203,8 @@ export async function deleteLiveRecord(recordId: string): Promise<boolean> {
 
   // 2. Try Backend API
   try {
-    const res = await fetch(`/api/evidence/${encodeURIComponent(recordId)}`, {
-      method: 'DELETE',
-    });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success) return true;
-    }
+    const res = await evidenceAPI.delete(recordId);
+    if (res.success) return true;
   } catch (err) {
     console.warn('[DatabaseService] API delete error:', err);
   }
@@ -215,12 +235,9 @@ export async function getLiveSources(): Promise<SourceRecord[]> {
 
   // 2. Try Backend API
   try {
-    const res = await fetch('/api/sources');
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-        return json.data as SourceRecord[];
-      }
+    const res = await sourcesAPI.getAll();
+    if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+      return res.data as SourceRecord[];
     }
   } catch (err) {
     // API not reachable
@@ -252,18 +269,15 @@ export async function getLiveScenarios(): Promise<SavedScenario[]> {
 
   // 2. Try Backend API
   try {
-    const res = await fetch('/api/scenarios');
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-        return json.data as SavedScenario[];
-      }
+    const res = await scenariosAPI.getAll();
+    if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+      return res.data as SavedScenario[];
     }
   } catch (err) {
     // API not reachable
   }
 
-  return [];
+  return memoryScenarios;
 }
 
 export async function saveLiveScenario(scenario: Omit<SavedScenario, 'id'>): Promise<SavedScenario> {
@@ -286,26 +300,21 @@ export async function saveLiveScenario(scenario: Omit<SavedScenario, 'id'>): Pro
 
   // 2. Try Backend API
   try {
-    const res = await fetch('/api/scenarios', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(scenario),
-    });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && json.data) {
-        return json.data as SavedScenario;
-      }
+    const res = await scenariosAPI.create(scenario);
+    if (res.success && res.data) {
+      return res.data as SavedScenario;
     }
   } catch (err) {
     console.warn('[DatabaseService] API save scenario error:', err);
   }
 
-  return {
+  const localScenario: SavedScenario = {
     ...scenario,
     id: `local-${Date.now()}`,
     created_at: new Date().toISOString(),
   };
+  memoryScenarios.unshift(localScenario);
+  return localScenario;
 }
 
 export async function deleteLiveScenario(id: string): Promise<boolean> {
@@ -319,13 +328,16 @@ export async function deleteLiveScenario(id: string): Promise<boolean> {
   }
 
   try {
-    const res = await fetch(`/api/scenarios/${encodeURIComponent(id)}`, { method: 'DELETE' });
-    if (res.ok) {
-      const json = await res.json();
-      return Boolean(json.success);
-    }
+    const res = await scenariosAPI.delete(id);
+    if (res.success) return true;
   } catch (err) {
     // ignore
+  }
+
+  const idx = memoryScenarios.findIndex((s) => s.id === id);
+  if (idx >= 0) {
+    memoryScenarios.splice(idx, 1);
+    return true;
   }
 
   return false;
@@ -338,20 +350,20 @@ export async function deleteLiveScenario(id: string): Promise<boolean> {
 export async function checkConnectivity(): Promise<DatabaseStatus> {
   // Check backend health endpoint
   try {
-    const res = await fetch('/api/health');
-    if (res.ok) {
-      const data = await res.json();
+    const res = await healthAPI.check();
+    if (res.success && res.data) {
+      const data = res.data;
       const sbOk = data.database?.supabase?.ok;
       const pgOk = data.database?.postgres_direct?.ok;
 
       return {
-        connected: sbOk || pgOk,
+        connected: Boolean(sbOk || pgOk),
         provider: sbOk ? 'supabase' : pgOk ? 'postgresql' : 'fallback',
         message: sbOk
           ? 'Connected to Supabase PostgreSQL'
           : pgOk
             ? 'Connected via PostgreSQL Pooler'
-            : 'Running with Verified Seed Dataset (Awaiting DB Credentials in .env)',
+            : 'Backend API Connected (Dual-Database Router Standby)',
         recordCount: rawRecords.length,
         sourceCount: rawSources.length,
       };
@@ -381,7 +393,7 @@ export async function checkConnectivity(): Promise<DatabaseStatus> {
   return {
     connected: false,
     provider: 'fallback',
-    message: 'Using Verified NASA Combustion Dataset (Configure .env for live Supabase/PostgreSQL)',
+    message: 'Using Verified NASA Combustion Dataset (Backend Standby)',
     recordCount: rawRecords.length,
     sourceCount: rawSources.length,
   };
@@ -399,12 +411,9 @@ export interface DashboardStats {
 
 export async function getDashboardStatistics(): Promise<DashboardStats> {
   try {
-    const res = await fetch('/api/dashboard/stats');
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && json.data && json.data.summary) {
-        return json.data.summary as DashboardStats;
-      }
+    const res = await dashboardAPI.getStats();
+    if (res.success && res.data && res.data.summary) {
+      return res.data.summary as DashboardStats;
     }
   } catch (e) {
     // fallback
@@ -423,4 +432,3 @@ export async function getDashboardStatistics(): Promise<DashboardStats> {
     tier2LiteratureRecords: t2,
   };
 }
-

@@ -26,3 +26,4 @@ CREATE POLICY "Service role full access on sync_outbox"
     FOR ALL
     USING (auth.jwt() ->> 'role' = 'service_role' OR auth.role() = 'service_role')
     WITH CHECK (auth.jwt() ->> 'role' = 'service_role' OR auth.role() = 'service_role');
+

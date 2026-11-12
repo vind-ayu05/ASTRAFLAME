@@ -254,3 +254,4 @@ runDualDatabaseVerification().catch((err) => {
   console.error('Unexpected verification exception:', err);
   process.exit(1);
 });
+

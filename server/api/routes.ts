@@ -52,10 +52,11 @@ apiRouter.get('/health', async (_req: Request, res: Response) => {
     checkPrismaHealth(),
   ]);
 
+  const liveConfigured = isPostgresConfigured || isSupabaseAdminConfigured;
   const overallOk = pgHealth.ok || sbHealth.ok;
 
-  res.status(overallOk ? 200 : 503).json({
-    status: overallOk ? 'healthy' : 'degraded',
+  res.status(200).json({
+    status: overallOk ? 'healthy' : liveConfigured ? 'degraded' : 'standby',
     service: 'ASTRAFLAME Spacecraft Fire Intelligence API',
     timestamp: new Date().toISOString(),
     database: {
@@ -65,7 +66,7 @@ apiRouter.get('/health', async (_req: Request, res: Response) => {
       postgres_direct: pgHealth,
       prisma: prismaHealth,
     },
-    mode: isPostgresConfigured || isSupabaseAdminConfigured ? 'live_database' : 'development_fallback',
+    mode: liveConfigured ? 'live_database' : 'development_fallback',
   });
 });
 

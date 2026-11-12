@@ -304,3 +304,4 @@ export function stopSyncWorker(): void {
     console.log('[Sync Worker] Stopped.');
   }
 }
+
