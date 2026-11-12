@@ -31,7 +31,7 @@ export const supabasePublic: SupabaseClient | null = (supabaseUrl && anonKey && 
   ? createClient(supabaseUrl, anonKey)
   : null;
 
-export async function checkSupabaseHealth(): Promise<{ ok: boolean; message: string; version?: string }> {
+export async function checkSupabaseHealth(): Promise<{ ok: boolean; message: string; version?: string; latencyMs?: number }> {
   if (!supabaseUrl || (!serviceRoleKey && !anonKey)) {
     return {
       ok: false,
@@ -44,17 +44,21 @@ export async function checkSupabaseHealth(): Promise<{ ok: boolean; message: str
     return { ok: false, message: 'Supabase client initialization failed.' };
   }
 
+  const start = Date.now();
   try {
     const { data, error } = await client.from('sources').select('count', { count: 'exact', head: true });
+    const latencyMs = Date.now() - start;
     if (error) {
       return {
         ok: false,
         message: `Supabase API responded with error: ${error.message}`,
+        latencyMs,
       };
     }
     return {
       ok: true,
       message: `Supabase API reachable. Sources table accessible (rows: ${data ?? 'verified'}).`,
+      latencyMs,
     };
   } catch (err: any) {
     return {

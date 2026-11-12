@@ -4,6 +4,7 @@ import cors from 'cors';
 import { config } from './config/index.ts';
 import { apiRouter } from './api/routes.ts';
 import { errorHandler } from './middleware/errorHandler.ts';
+import { startSyncWorker } from './services/syncService.ts';
 
 const app = express();
 const PORT = config.port;
@@ -21,7 +22,11 @@ if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log(`[ASTRAFLAME Backend] Running on http://localhost:${PORT}`);
     console.log(`[ASTRAFLAME Backend] Health endpoint: http://localhost:${PORT}/api/health`);
+    console.log(`[ASTRAFLAME Backend] Database diagnostics: http://localhost:${PORT}/api/health/database`);
     console.log(`[ASTRAFLAME Backend] Dashboard stats: http://localhost:${PORT}/api/dashboard/stats`);
+
+    // Start background asynchronous synchronization worker
+    startSyncWorker();
   });
 }
 

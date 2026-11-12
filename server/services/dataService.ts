@@ -7,6 +7,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { query, isPostgresConfigured } from '../db/postgres.ts';
 import { supabaseAdmin, supabasePublic } from '../db/supabaseAdmin.ts';
+import { queueOutboxEvent } from './syncService.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -192,6 +193,7 @@ export async function insertEvidenceRecord(record: any, clientIp?: string): Prom
       );
 
       await recordAuditLog('INSERT', 'evidence_records', recordId, { investigation: record.investigation }, undefined, clientIp);
+      queueOutboxEvent('evidence_record', recordId, 'INSERT', res.rows[0]).catch(() => {});
       return res.rows[0];
     } catch (e: any) {
       console.warn('[DataService] PostgreSQL insert failed, trying Supabase:', e.message);
@@ -204,6 +206,7 @@ export async function insertEvidenceRecord(record: any, clientIp?: string): Prom
       const { data, error } = await client.from('evidence_records').insert([record]).select().single();
       if (!error && data) {
         await recordAuditLog('INSERT', 'evidence_records', recordId, { investigation: record.investigation }, undefined, clientIp);
+        queueOutboxEvent('evidence_record', recordId, 'INSERT', data).catch(() => {});
         return data;
       }
     } catch (e: any) {
@@ -219,6 +222,7 @@ export async function insertEvidenceRecord(record: any, clientIp?: string): Prom
     memoryRecords.push(record);
   }
   await recordAuditLog('INSERT', 'evidence_records', recordId, { storage: 'memory' }, undefined, clientIp);
+  queueOutboxEvent('evidence_record', recordId, 'INSERT', record).catch(() => {});
   return record;
 }
 
@@ -245,6 +249,7 @@ export async function updateEvidenceRecord(recordId: string, updates: any, clien
 
       if (res.rows.length > 0) {
         await recordAuditLog('UPDATE', 'evidence_records', recordId, updates, undefined, clientIp);
+        queueOutboxEvent('evidence_record', recordId, 'UPDATE', res.rows[0]).catch(() => {});
         return res.rows[0];
       }
     } catch (e: any) {
@@ -263,6 +268,7 @@ export async function updateEvidenceRecord(recordId: string, updates: any, clien
         .single();
       if (!error && data) {
         await recordAuditLog('UPDATE', 'evidence_records', recordId, updates, undefined, clientIp);
+        queueOutboxEvent('evidence_record', recordId, 'UPDATE', data).catch(() => {});
         return data;
       }
     } catch (e: any) {
@@ -274,6 +280,7 @@ export async function updateEvidenceRecord(recordId: string, updates: any, clien
   if (idx >= 0) {
     memoryRecords[idx] = { ...memoryRecords[idx], ...updates };
     await recordAuditLog('UPDATE', 'evidence_records', recordId, updates, undefined, clientIp);
+    queueOutboxEvent('evidence_record', recordId, 'UPDATE', memoryRecords[idx]).catch(() => {});
     return memoryRecords[idx];
   }
 
@@ -285,6 +292,7 @@ export async function deleteEvidenceRecord(recordId: string, clientIp?: string):
     try {
       await query('DELETE FROM public.evidence_records WHERE record_id = $1', [recordId]);
       await recordAuditLog('DELETE', 'evidence_records', recordId, {}, undefined, clientIp);
+      queueOutboxEvent('evidence_record', recordId, 'DELETE', { recordId }).catch(() => {});
       return true;
     } catch (e: any) {
       console.warn('[DataService] PostgreSQL delete error:', e.message);
@@ -297,6 +305,7 @@ export async function deleteEvidenceRecord(recordId: string, clientIp?: string):
       const { error } = await client.from('evidence_records').delete().eq('record_id', recordId);
       if (!error) {
         await recordAuditLog('DELETE', 'evidence_records', recordId, {}, undefined, clientIp);
+        queueOutboxEvent('evidence_record', recordId, 'DELETE', { recordId }).catch(() => {});
         return true;
       }
     } catch (e: any) {
@@ -308,6 +317,7 @@ export async function deleteEvidenceRecord(recordId: string, clientIp?: string):
   if (idx >= 0) {
     memoryRecords.splice(idx, 1);
     await recordAuditLog('DELETE', 'evidence_records', recordId, {}, undefined, clientIp);
+    queueOutboxEvent('evidence_record', recordId, 'DELETE', { recordId }).catch(() => {});
     return true;
   }
 
@@ -457,6 +467,7 @@ export async function insertScenario(scenario: any, clientIp?: string): Promise<
         ]
       );
       await recordAuditLog('INSERT', 'scenarios', res.rows[0].id, { title: scenario.title }, undefined, clientIp);
+      queueOutboxEvent('scenario', res.rows[0].id, 'INSERT', res.rows[0]).catch(() => {});
       return res.rows[0];
     } catch (e: any) {
       console.warn('[DataService] PostgreSQL scenario insert failed:', e.message);
@@ -469,6 +480,7 @@ export async function insertScenario(scenario: any, clientIp?: string): Promise<
       const { data, error } = await client.from('scenarios').insert([scenario]).select().single();
       if (!error && data) {
         await recordAuditLog('INSERT', 'scenarios', data.id, { title: scenario.title }, undefined, clientIp);
+        queueOutboxEvent('scenario', data.id, 'INSERT', data).catch(() => {});
         return data;
       }
     } catch (e: any) {
@@ -479,6 +491,7 @@ export async function insertScenario(scenario: any, clientIp?: string): Promise<
   const newScen = { ...scenario, id, created_at: new Date().toISOString() };
   memoryScenarios.unshift(newScen);
   await recordAuditLog('INSERT', 'scenarios', id, { title: scenario.title }, undefined, clientIp);
+  queueOutboxEvent('scenario', id, 'INSERT', newScen).catch(() => {});
   return newScen;
 }
 
@@ -487,6 +500,7 @@ export async function deleteScenario(scenarioId: string, clientIp?: string): Pro
     try {
       await query('DELETE FROM public.scenarios WHERE id = $1', [scenarioId]);
       await recordAuditLog('DELETE', 'scenarios', scenarioId, {}, undefined, clientIp);
+      queueOutboxEvent('scenario', scenarioId, 'DELETE', { id: scenarioId }).catch(() => {});
       return true;
     } catch (e: any) {
       console.warn('[DataService] PostgreSQL delete scenario error:', e.message);
@@ -499,6 +513,7 @@ export async function deleteScenario(scenarioId: string, clientIp?: string): Pro
       const { error } = await client.from('scenarios').delete().eq('id', scenarioId);
       if (!error) {
         await recordAuditLog('DELETE', 'scenarios', scenarioId, {}, undefined, clientIp);
+        queueOutboxEvent('scenario', scenarioId, 'DELETE', { id: scenarioId }).catch(() => {});
         return true;
       }
     } catch (e: any) {
@@ -510,6 +525,7 @@ export async function deleteScenario(scenarioId: string, clientIp?: string): Pro
   if (idx >= 0) {
     memoryScenarios.splice(idx, 1);
     await recordAuditLog('DELETE', 'scenarios', scenarioId, {}, undefined, clientIp);
+    queueOutboxEvent('scenario', scenarioId, 'DELETE', { id: scenarioId }).catch(() => {});
     return true;
   }
 

@@ -1,15 +1,17 @@
-// DatabaseStatusBadge: subtle indicator in top navigation showing Supabase & PostgreSQL connection status.
-// Clicking opens a diagnostic drawer with connection health, table status, and Supabase Auth session management.
+// DatabaseStatusBadge: indicator in top navigation showing Dual-Database Architecture
+// (Primary Supabase PostgreSQL + Secondary Analytical PostgreSQL + Outbox Synchronization Pipeline).
+// Clicking opens a diagnostic drawer with dual connection health, outbox queue metrics, and Supabase Auth.
 
 import { useState } from 'react';
-import { Database, CheckCircle, AlertCircle, RefreshCw, X, Server, ShieldCheck, User, LogIn, LogOut } from 'lucide-react';
+import { Database, CheckCircle, RefreshCw, X, Server, ShieldCheck, User, LogIn, LogOut, ArrowRightLeft, Activity } from 'lucide-react';
 import { useDatabase } from '../context/DatabaseContext.tsx';
 
 export function DatabaseStatusBadge() {
-  const { status, loading, refresh, user, signIn, signUp, signOut } = useDatabase();
+  const { status, dualHealth, triggerSync, loading, refresh, user, signIn, signUp, signOut } = useDatabase();
   const [modalOpen, setModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'status' | 'auth'>('status');
+  const [activeTab, setActiveTab] = useState<'status' | 'sync' | 'auth'>('status');
   const [refreshing, setRefreshing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   // Auth form state
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
@@ -23,6 +25,12 @@ export function DatabaseStatusBadge() {
     setRefreshing(true);
     await refresh();
     setRefreshing(false);
+  };
+
+  const handleTriggerSync = async () => {
+    setSyncing(true);
+    await triggerSync();
+    setSyncing(false);
   };
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
@@ -48,7 +56,9 @@ export function DatabaseStatusBadge() {
     }
   };
 
-  const isConnected = status.connected;
+  const isPrimaryConnected = dualHealth ? dualHealth.primary.connected : status.connected;
+  const isSecondaryConnected = dualHealth ? dualHealth.secondary.connected : false;
+  const syncInfo = dualHealth?.synchronization;
 
   return (
     <>
@@ -56,18 +66,27 @@ export function DatabaseStatusBadge() {
         type="button"
         onClick={() => setModalOpen(true)}
         title={status.message}
-        aria-label="Database Connection Status"
+        aria-label="Dual Database Architecture Status"
         className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-subtle bg-bg-card px-2.5 text-xs text-text-secondary transition-colors hover:text-text-primary"
       >
-        <Database size={14} className={isConnected ? 'text-emerald-400' : 'text-amber-400'} />
+        <Database size={14} className={isPrimaryConnected ? 'text-emerald-400' : 'text-amber-400'} />
         <span className="hidden lg:inline text-[11px] font-mono">
-          {isConnected ? (status.provider === 'supabase' ? 'Supabase' : 'Postgres') : 'DB Ready'}
+          {isPrimaryConnected ? 'Dual DB' : 'DB Ready'}
         </span>
-        <span
-          className={`h-1.5 w-1.5 rounded-full ${
-            isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
-          }`}
-        />
+        <div className="flex items-center gap-1">
+          <span
+            title="Primary Supabase DB"
+            className={`h-1.5 w-1.5 rounded-full ${
+              isPrimaryConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+            }`}
+          />
+          <span
+            title="Secondary Analytical DB"
+            className={`h-1.5 w-1.5 rounded-full ${
+              isSecondaryConnected ? 'bg-cyan-400' : 'bg-gray-500'
+            }`}
+          />
+        </div>
         {user && <span className="h-2 w-2 rounded-full bg-brand-orange" title={`User: ${user.email || 'Active'}`} />}
       </button>
 
@@ -88,7 +107,7 @@ export function DatabaseStatusBadge() {
               <div className="flex items-center gap-2">
                 <Database size={18} className="text-brand-orange" />
                 <h2 id="db-status-title" className="font-display text-base font-semibold text-text-primary">
-                  Database & Auth Integration
+                  Dual-Database Architecture
                 </h2>
               </div>
               <button
@@ -112,7 +131,19 @@ export function DatabaseStatusBadge() {
                     : 'border-transparent text-text-muted hover:text-text-secondary'
                 }`}
               >
-                Database Diagnostics
+                Dual DB Status
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('sync')}
+                className={`px-3 py-1.5 font-medium border-b-2 transition-colors flex items-center gap-1 ${
+                  activeTab === 'sync'
+                    ? 'border-brand-orange text-text-primary'
+                    : 'border-transparent text-text-muted hover:text-text-secondary'
+                }`}
+              >
+                <ArrowRightLeft size={12} />
+                <span>Sync Pipeline</span>
               </button>
               <button
                 type="button"
@@ -128,75 +159,125 @@ export function DatabaseStatusBadge() {
               </button>
             </div>
 
-            {/* Tab 1: Database Status */}
+            {/* Tab 1: Dual Database Status */}
             {activeTab === 'status' && (
               <div className="space-y-3 text-xs">
-                <div className="flex items-start gap-3 rounded-lg border border-subtle/50 bg-bg-card p-3">
-                  {isConnected ? (
-                    <CheckCircle size={18} className="text-emerald-400 shrink-0 mt-0.5" />
-                  ) : (
-                    <AlertCircle size={18} className="text-amber-400 shrink-0 mt-0.5" />
-                  )}
-                  <div>
-                    <p className="font-semibold text-text-primary">
-                      {isConnected ? 'Database Connected' : 'Seed Data Active (Standby)'}
-                    </p>
-                    <p className="text-text-secondary mt-0.5">{status.message}</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="rounded border border-subtle p-2.5 bg-bg-card">
-                    <div className="flex items-center gap-1.5 text-text-secondary mb-1">
-                      <Server size={13} className="text-brand-orange" />
-                      <span className="font-medium">Primary Provider</span>
+                {/* Primary DB Box */}
+                <div className="rounded-lg border border-subtle/70 bg-bg-card p-3 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Server size={14} className="text-brand-orange" />
+                      <span className="font-semibold text-text-primary">Primary Database (Authoritative)</span>
                     </div>
-                    <p className="font-mono text-text-primary text-[11px]">
-                      Supabase PostgreSQL
-                    </p>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono ${
+                      isPrimaryConnected ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                    }`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${isPrimaryConnected ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+                      {isPrimaryConnected ? 'Connected' : 'Standby Seed'}
+                    </span>
                   </div>
-                  <div className="rounded border border-subtle p-2.5 bg-bg-card">
-                    <div className="flex items-center gap-1.5 text-text-secondary mb-1">
-                      <ShieldCheck size={13} className="text-brand-orange" />
-                      <span className="font-medium">Direct Access ORM</span>
-                    </div>
-                    <p className="font-mono text-text-primary text-[11px]">
-                      Prisma ORM / pg Pool
-                    </p>
-                  </div>
-                </div>
-
-                <div className="rounded-lg border border-subtle p-3 bg-bg-card space-y-1.5">
-                  <p className="font-semibold text-text-primary text-[11px] uppercase tracking-wider">
-                    Schema Tables (Same Supabase Database)
+                  <p className="text-text-secondary text-[11px]">
+                    Supabase PostgreSQL: Source of truth for users, experiments, evidence records, and active scenarios.
                   </p>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 font-mono text-[11px] text-text-secondary">
-                    <span>• evidence_records ({status.recordCount})</span>
-                    <span>• sources ({status.sourceCount})</span>
-                    <span>• experiments (4)</span>
-                    <span>• materials (4)</span>
-                    <span>• scenarios (active)</span>
-                    <span>• measurements (active)</span>
-                    <span>• users (RLS protected)</span>
-                    <span>• audit_logs (provenance)</span>
-                  </div>
+                  {dualHealth?.primary.latencyMs && (
+                    <p className="font-mono text-[10px] text-text-muted">
+                      Latency: {dualHealth.primary.latencyMs}ms | Engine: pg.Pool & Prisma ORM
+                    </p>
+                  )}
                 </div>
 
-                {!isConnected && (
-                  <div className="rounded border border-amber-500/20 bg-amber-500/10 p-3 text-amber-200 text-[11px] leading-relaxed">
-                    <p className="font-semibold">Ready to connect live Supabase & PostgreSQL?</p>
-                    <p className="mt-1">
-                      Enter your <code className="font-mono bg-black/40 px-1 py-0.5 rounded">SUPABASE_URL</code>,{' '}
-                      <code className="font-mono bg-black/40 px-1 py-0.5 rounded">SUPABASE_ANON_KEY</code>, and{' '}
-                      <code className="font-mono bg-black/40 px-1 py-0.5 rounded">DATABASE_URL</code> in your{' '}
-                      <code className="font-mono bg-black/40 px-1 py-0.5 rounded">.env</code> file.
-                    </p>
+                {/* Secondary DB Box */}
+                <div className="rounded-lg border border-subtle/70 bg-bg-card p-3 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Activity size={14} className="text-cyan-400" />
+                      <span className="font-semibold text-text-primary">Secondary Database (Analytical)</span>
+                    </div>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono ${
+                      isSecondaryConnected ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-gray-500/10 text-gray-400 border border-gray-500/20'
+                    }`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${isSecondaryConnected ? 'bg-cyan-400' : 'bg-gray-400'}`} />
+                      {isSecondaryConnected ? 'Connected' : 'Standby'}
+                    </span>
                   </div>
-                )}
+                  <p className="text-text-secondary text-[11px]">
+                    Separate PostgreSQL: Handles heavy aggregations, historical statistics, flammability indices, and dashboard reporting.
+                  </p>
+                  {dualHealth?.secondary.latencyMs ? (
+                    <p className="font-mono text-[10px] text-text-muted">
+                      Latency: {dualHealth.secondary.latencyMs}ms | Pool: {dualHealth.secondary.pool?.idle || 0} idle connections
+                    </p>
+                  ) : (
+                    <p className="text-[10px] text-text-muted">
+                      Configured via <code className="bg-black/30 px-1 py-0.5 rounded">SECONDARY_DATABASE_URL</code>
+                    </p>
+                  )}
+                </div>
+
+                {/* Routing Policy Card */}
+                <div className="rounded-lg border border-subtle p-3 bg-bg-card space-y-1">
+                  <div className="flex items-center gap-1.5 text-text-secondary">
+                    <ShieldCheck size={13} className="text-brand-orange" />
+                    <span className="font-semibold uppercase tracking-wider text-[11px]">Intelligent Routing Matrix</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 font-mono text-[11px] text-text-secondary pt-1">
+                    <span>• Writes: Primary Only</span>
+                    <span>• Evidence Lookups: Primary</span>
+                    <span>• Dashboard Analytics: {isSecondaryConnected ? 'Secondary' : 'Primary Fallback'}</span>
+                    <span>• Historical Spread: {isSecondaryConnected ? 'Secondary' : 'Primary Fallback'}</span>
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* Tab 2: Supabase Auth */}
+            {/* Tab 2: Synchronization Pipeline */}
+            {activeTab === 'sync' && (
+              <div className="space-y-3 text-xs">
+                <div className="rounded-lg border border-subtle/70 bg-bg-card p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-text-primary">Transactional Outbox Worker</span>
+                    <span className="font-mono text-[11px] text-text-muted">
+                      Mode: {syncInfo?.mode || 'Standby In-Memory Queue'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 pt-1">
+                    <div className="p-2 rounded bg-bg-subtle border border-subtle/50 text-center">
+                      <p className="text-[10px] text-text-muted uppercase">Pending</p>
+                      <p className="font-mono text-base font-semibold text-amber-400">{syncInfo?.pendingJobs ?? 0}</p>
+                    </div>
+                    <div className="p-2 rounded bg-bg-subtle border border-subtle/50 text-center">
+                      <p className="text-[10px] text-text-muted uppercase">Synced</p>
+                      <p className="font-mono text-base font-semibold text-emerald-400">{syncInfo?.syncedJobs ?? 0}</p>
+                    </div>
+                    <div className="p-2 rounded bg-bg-subtle border border-subtle/50 text-center">
+                      <p className="text-[10px] text-text-muted uppercase">Failed</p>
+                      <p className="font-mono text-base font-semibold text-red-400">{syncInfo?.failedJobs ?? 0}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-text-muted pt-1">
+                    <span>Last Sync: {syncInfo?.lastSyncTimestamp ? new Date(syncInfo.lastSyncTimestamp).toLocaleTimeString() : 'Recent'}</span>
+                    <button
+                      type="button"
+                      onClick={handleTriggerSync}
+                      disabled={syncing}
+                      className="px-2.5 py-1 rounded bg-brand-orange/10 border border-brand-orange/30 text-brand-orange hover:bg-brand-orange/20 transition-colors flex items-center gap-1"
+                    >
+                      <RefreshCw size={11} className={syncing ? 'animate-spin' : ''} />
+                      <span>{syncing ? 'Syncing...' : 'Sync Now'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="rounded border border-subtle/50 p-3 bg-bg-card text-text-secondary text-[11px] space-y-1">
+                  <p className="font-semibold text-text-primary">Guaranteed Properties:</p>
+                  <p>✔ <strong>Non-blocking Writes:</strong> Writes commit to Primary immediately without blocking on Secondary.</p>
+                  <p>✔ <strong>Idempotency:</strong> Payload hashing prevents duplicated aggregate metrics.</p>
+                  <p>✔ <strong>Failure Isolation:</strong> If Secondary goes offline, Primary continues operating without interruption.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 3: Supabase Auth */}
             {activeTab === 'auth' && (
               <div className="space-y-4 text-xs">
                 {user ? (
@@ -255,28 +336,29 @@ export function DatabaseStatusBadge() {
                       </p>
                     )}
 
-                    <div>
-                      <label className="block text-[11px] font-medium text-text-secondary mb-1">Email</label>
-                      <input
-                        type="email"
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="researcher@nasa.gov"
-                        className="w-full rounded border border-subtle bg-bg-card px-3 py-1.5 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-orange"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-medium text-text-secondary mb-1">Password</label>
-                      <input
-                        type="password"
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
-                        className="w-full rounded border border-subtle bg-bg-card px-3 py-1.5 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-orange"
-                      />
+                    <div className="space-y-2">
+                      <div>
+                        <label className="block text-[11px] text-text-secondary mb-1">Email</label>
+                        <input
+                          type="email"
+                          required
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="researcher@nasa.gov"
+                          className="w-full rounded border border-subtle bg-bg-card px-2.5 py-1.5 text-xs text-text-primary focus:border-brand-orange focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] text-text-secondary mb-1">Password</label>
+                        <input
+                          type="password"
+                          required
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="w-full rounded border border-subtle bg-bg-card px-2.5 py-1.5 text-xs text-text-primary focus:border-brand-orange focus:outline-none"
+                        />
+                      </div>
                     </div>
 
                     <button

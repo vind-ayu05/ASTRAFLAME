@@ -45,6 +45,7 @@ async function runMigrations() {
       '20261111000001_create_astraflame_schema.sql',
       '20261111000002_seed_astraflame_data.sql',
       '20261111000003_rls_and_security.sql',
+      '20261112000001_create_sync_outbox.sql',
     ];
 
     for (const file of migrationFiles) {

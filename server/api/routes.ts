@@ -7,8 +7,11 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { checkPostgresHealth, pool, isPostgresConfigured } from '../db/postgres.ts';
+import { checkSecondaryPostgresHealth } from '../db/secondaryPostgres.ts';
 import { checkSupabaseHealth, isSupabaseAdminConfigured } from '../db/supabaseAdmin.ts';
 import { checkPrismaHealth } from '../db/prisma.ts';
+import { getRoutingStatus, getFlammabilityAggregates } from '../db/router.ts';
+import { getSyncStatus, processSyncQueue } from '../services/syncService.ts';
 import { authRouter } from '../routes/authRoutes.ts';
 import { dashboardRouter } from '../routes/dashboardRoutes.ts';
 import { storageRouter } from '../routes/storageRoutes.ts';
@@ -64,6 +67,79 @@ apiRouter.get('/health', async (_req: Request, res: Response) => {
     },
     mode: isPostgresConfigured || isSupabaseAdminConfigured ? 'live_database' : 'development_fallback',
   });
+});
+
+apiRouter.get('/health/database', async (_req: Request, res: Response) => {
+  try {
+    const [primaryPg, primarySb, secondaryPg, syncStatus, routing] = await Promise.all([
+      checkPostgresHealth(),
+      checkSupabaseHealth(),
+      checkSecondaryPostgresHealth(),
+      getSyncStatus(),
+      getRoutingStatus(),
+    ]);
+
+    const isPrimaryHealthy = primaryPg.ok || primarySb.ok;
+    const isSecondaryHealthy = secondaryPg.connected;
+
+    res.json({
+      success: true,
+      status: isPrimaryHealthy ? 'healthy' : (isSecondaryHealthy ? 'degraded' : 'standby'),
+      timestamp: new Date().toISOString(),
+      primary: {
+        provider: 'supabase_postgres',
+        connected: isPrimaryHealthy,
+        latencyMs: primaryPg.latencyMs || primarySb.latencyMs,
+        details: {
+          postgresPool: primaryPg,
+          supabaseClient: primarySb,
+        },
+      },
+      secondary: {
+        provider: 'analytical_postgres',
+        connected: isSecondaryHealthy,
+        latencyMs: secondaryPg.latencyMs,
+        pool: secondaryPg.pool,
+        message: secondaryPg.message,
+      },
+      synchronization: syncStatus,
+      routing,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ==============================================================================
+// 1B. ANALYTICS & SYNCHRONIZATION ENDPOINTS
+// ==============================================================================
+apiRouter.get('/analytics/flammability', async (req: Request, res: Response) => {
+  try {
+    const materialId = req.query.materialId as string | undefined;
+    const gravityLevel = req.query.gravityLevel as string | undefined;
+    const data = await getFlammabilityAggregates({ materialId, gravityLevel });
+    res.json({ success: true, count: data.length, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+apiRouter.get('/sync/status', async (_req: Request, res: Response) => {
+  try {
+    const status = await getSyncStatus();
+    res.json({ success: true, data: status });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+apiRouter.post('/sync/trigger', async (_req: Request, res: Response) => {
+  try {
+    const result = await processSyncQueue();
+    res.json({ success: true, data: result });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // ==============================================================================

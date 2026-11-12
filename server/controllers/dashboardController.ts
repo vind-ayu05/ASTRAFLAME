@@ -1,5 +1,9 @@
 // Dashboard Controller: aggregates database statistics for ASTRAFLAME
+// Uses Intelligent Database Router for Secondary PostgreSQL analytical distribution
+// with seamless Primary PostgreSQL fallback and TTL cache.
+
 import type { Request, Response } from 'express';
+import { getDashboardAnalytics, getRoutingStatus } from '../db/router.ts';
 import {
   fetchEvidenceRecords,
   fetchSources,
@@ -11,14 +15,17 @@ import {
 
 export async function getDashboardStats(_req: Request, res: Response) {
   try {
-    const [records, sources, experiments, materials, scenarios, auditLogs] = await Promise.all([
-      fetchEvidenceRecords(),
-      fetchSources(),
-      fetchExperiments(),
-      fetchMaterials(),
-      fetchScenarios(),
-      fetchAuditLogs(10),
-    ]);
+    const [analyticsSummary, routingStatus, records, sources, experiments, materials, scenarios, auditLogs] =
+      await Promise.all([
+        getDashboardAnalytics(),
+        getRoutingStatus(),
+        fetchEvidenceRecords(),
+        fetchSources(),
+        fetchExperiments(),
+        fetchMaterials(),
+        fetchScenarios(),
+        fetchAuditLogs(10),
+      ]);
 
     // Breakdown by gravity category
     const gravityBreakdown = records.reduce((acc: Record<string, number>, r) => {
@@ -48,27 +55,30 @@ export async function getDashboardStats(_req: Request, res: Response) {
       { tier1: 0, tier2: 0 }
     );
 
-    // Approximate total measurements across records
-    const estimatedMeasurements = records.length * 6;
-
     res.json({
       success: true,
       data: {
         summary: {
-          totalRecords: records.length,
+          totalRecords: analyticsSummary.totalRecords || records.length,
+          verifiedRecords: analyticsSummary.verifiedRecords,
+          microgravityRecords: analyticsSummary.microgravityRecords,
+          normalGravityRecords: analyticsSummary.normalGravityRecords,
           totalExperiments: experiments.length,
           totalSources: sources.length,
           totalMaterials: materials.length,
           totalScenarios: scenarios.length,
-          totalMeasurements: estimatedMeasurements,
+          totalMeasurements: records.length * 6,
           tier1FlightRecords: tierCounts.tier1,
           tier2LiteratureRecords: tierCounts.tier2,
+          analyticsSource: analyticsSummary.source,
+          cachedAt: analyticsSummary.cachedAt,
         },
         distributions: {
           byGravity: gravityBreakdown,
           byMaterial: materialBreakdown,
           byReviewStatus: statusBreakdown,
         },
+        routing: routingStatus,
         recentActivities: auditLogs.slice(0, 5),
         timestamp: new Date().toISOString(),
       },
@@ -77,4 +87,3 @@ export async function getDashboardStats(_req: Request, res: Response) {
     res.status(500).json({ success: false, error: err.message });
   }
 }
-

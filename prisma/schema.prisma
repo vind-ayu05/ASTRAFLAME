@@ -165,3 +165,19 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+model SyncOutbox {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entityType String    @map("entity_type")
+  sourceId   String    @map("source_id")
+  action     String    // INSERT, UPDATE, DELETE
+  payload    Json      @default("{}")
+  status     String    @default("pending") // pending, synced, failed
+  retryCount Int       @default(0) @map("retry_count")
+  lastError  String?   @map("last_error")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  syncedAt   DateTime? @map("synced_at") @db.Timestamptz(6)
+
+  @@index([status, createdAt], map: "idx_sync_outbox_status")
+  @@map("sync_outbox")
+}
+

@@ -17,9 +17,23 @@ import {
   getDashboardStatistics,
 } from '../services/databaseService.ts';
 import type { DatabaseStatus, SavedScenario, DashboardStats } from '../services/databaseService.ts';
+import { healthAPI, syncAPI } from '../services/apiClient.ts';
 import { supabase, isSupabaseConfigured } from '../lib/supabase.ts';
 import { setDynamicRecords } from '../data/records.ts';
 import { setDynamicSources } from '../data/sources.ts';
+
+export interface DualDatabaseHealth {
+  primary: { provider: string; connected: boolean; latencyMs?: number };
+  secondary: {
+    provider: string;
+    connected: boolean;
+    latencyMs?: number;
+    message?: string;
+    pool?: { total: number; idle: number; waiting: number };
+  };
+  synchronization: { status: string; pendingJobs: number; failedJobs: number; syncedJobs: number; lastSyncTimestamp: string | null; mode: string };
+  routing?: { routingPolicies: Record<string, string>; fallbackActive: boolean; cacheStats: any };
+}
 
 interface DatabaseContextValue {
   records: ExperimentRecord[];
@@ -27,6 +41,7 @@ interface DatabaseContextValue {
   scenarios: SavedScenario[];
   stats: DashboardStats;
   status: DatabaseStatus;
+  dualHealth: DualDatabaseHealth | null;
   loading: boolean;
   error: string | null;
   user: { id: string; email?: string } | null;
@@ -38,6 +53,7 @@ interface DatabaseContextValue {
   deleteRecord: (id: string) => Promise<boolean>;
   saveScenario: (scenario: Omit<SavedScenario, 'id'>) => Promise<SavedScenario>;
   deleteScenario: (id: string) => Promise<boolean>;
+  triggerSync: () => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -66,18 +82,20 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dualHealth, setDualHealth] = useState<DualDatabaseHealth | null>(null);
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const [recs, srcs, scens, connStatus, dashStats] = await Promise.all([
+      const [recs, srcs, scens, connStatus, dashStats, dbHealthRes] = await Promise.all([
         getLiveRecords(),
         getLiveSources(),
         getLiveScenarios(),
         checkConnectivity(),
         getDashboardStatistics(),
+        healthAPI.getDatabaseHealth().catch(() => null),
       ]);
 
       setRecords(recs);
@@ -89,6 +107,15 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
         recordCount: recs.length,
         sourceCount: srcs.length,
       });
+
+      if (dbHealthRes && dbHealthRes.success && dbHealthRes.data) {
+        setDualHealth({
+          primary: dbHealthRes.data.primary,
+          secondary: dbHealthRes.data.secondary,
+          synchronization: dbHealthRes.data.synchronization,
+          routing: dbHealthRes.data.routing,
+        });
+      }
 
       // Synchronize in-memory singletons so non-React components (chatEngine, sed-engine) get live records
       setDynamicRecords(recs);
@@ -218,6 +245,15 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     return ok;
   }, []);
 
+  const triggerSync = useCallback(async () => {
+    try {
+      await syncAPI.trigger();
+      await loadData();
+    } catch (e: any) {
+      console.warn('[DatabaseProvider] Sync trigger error:', e.message);
+    }
+  }, [loadData]);
+
   const value = useMemo(
     () => ({
       records,
@@ -225,6 +261,7 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
       scenarios,
       stats,
       status,
+      dualHealth,
       loading,
       error,
       user,
@@ -236,9 +273,10 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
       deleteRecord,
       saveScenario,
       deleteScenario,
+      triggerSync,
       refresh: loadData,
     }),
-    [records, sources, scenarios, stats, status, loading, error, user, signIn, signUp, signOut, addRecord, updateRecord, deleteRecord, saveScenario, deleteScenario, loadData]
+    [records, sources, scenarios, stats, status, dualHealth, loading, error, user, signIn, signUp, signOut, addRecord, updateRecord, deleteRecord, saveScenario, deleteScenario, triggerSync, loadData]
   );
 
   return <DatabaseContext.Provider value={value}>{children}</DatabaseContext.Provider>;

@@ -138,6 +138,22 @@ export const authAPI = {
 
 export const healthAPI = {
   check: () => apiClient.get('/health'),
+  getDatabaseHealth: () => apiClient.get('/health/database'),
+};
+
+export const analyticsAPI = {
+  getFlammability: (materialId?: string, gravityLevel?: string) => {
+    const params = new URLSearchParams();
+    if (materialId) params.append('materialId', materialId);
+    if (gravityLevel) params.append('gravityLevel', gravityLevel);
+    const queryStr = params.toString() ? `?${params.toString()}` : '';
+    return apiClient.get(`/analytics/flammability${queryStr}`);
+  },
+};
+
+export const syncAPI = {
+  getStatus: () => apiClient.get('/sync/status'),
+  trigger: () => apiClient.post('/sync/trigger'),
 };
 
 export const storageAPI = {

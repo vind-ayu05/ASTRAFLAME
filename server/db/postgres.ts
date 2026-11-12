@@ -54,7 +54,7 @@ export async function query<T extends QueryResultRow = any>(text: string, params
 /**
  * Tests direct PostgreSQL connectivity.
  */
-export async function checkPostgresHealth(): Promise<{ ok: boolean; message: string; timestamp?: string }> {
+export async function checkPostgresHealth(): Promise<{ ok: boolean; message: string; timestamp?: string; latencyMs?: number }> {
   if (!isPostgresConfigured) {
     return {
       ok: false,
@@ -62,12 +62,15 @@ export async function checkPostgresHealth(): Promise<{ ok: boolean; message: str
     };
   }
 
+  const start = Date.now();
   try {
     const res = await pool.query('SELECT NOW() as current_time, current_database() as db_name');
+    const latencyMs = Date.now() - start;
     return {
       ok: true,
       message: `Connected to PostgreSQL database: ${res.rows[0].db_name}`,
       timestamp: res.rows[0].current_time,
+      latencyMs,
     };
   } catch (error: any) {
     return {
