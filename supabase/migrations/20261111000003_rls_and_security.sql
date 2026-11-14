@@ -15,24 +15,35 @@ ALTER TABLE public.measurements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.scenarios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
+-- Helper function for role check
+CREATE OR REPLACE FUNCTION public.is_admin_or_curator()
+RETURNS boolean AS $$
+BEGIN
+  RETURN (
+    (current_setting('request.jwt.claims', true)::jsonb -> 'app_metadata' ->> 'role') IN ('admin', 'curator')
+    OR
+    (current_setting('request.jwt.claims', true)::jsonb -> 'user_metadata' ->> 'role') IN ('admin', 'curator')
+    OR
+    (current_setting('role', true) = 'service_role')
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- ------------------------------------------------------------------------------
 -- 2. USERS POLICIES
 -- ------------------------------------------------------------------------------
--- Users can only view their own user profile
 DROP POLICY IF EXISTS "Users can read own profile" ON public.users;
 CREATE POLICY "Users can read own profile"
     ON public.users
     FOR SELECT
     USING (auth.uid() = id);
 
--- Users can update their own user profile
 DROP POLICY IF EXISTS "Users can update own profile" ON public.users;
 CREATE POLICY "Users can update own profile"
     ON public.users
     FOR UPDATE
     USING (auth.uid() = id);
 
--- Service role has full management access to users
 DROP POLICY IF EXISTS "Service role full user access" ON public.users;
 CREATE POLICY "Service role full user access"
     ON public.users
@@ -54,13 +65,13 @@ CREATE POLICY "Public can view experiments"
     TO anon, authenticated, service_role
     USING (true);
 
-DROP POLICY IF EXISTS "Service role can modify experiments" ON public.experiments;
-CREATE POLICY "Service role can modify experiments"
+DROP POLICY IF EXISTS "Curators manage experiments" ON public.experiments;
+CREATE POLICY "Curators manage experiments"
     ON public.experiments
     FOR ALL
-    TO service_role
-    USING (true)
-    WITH CHECK (true);
+    TO authenticated, service_role
+    USING (public.is_admin_or_curator())
+    WITH CHECK (public.is_admin_or_curator());
 
 -- Sources
 DROP POLICY IF EXISTS "Public can view sources" ON public.sources;
@@ -70,13 +81,13 @@ CREATE POLICY "Public can view sources"
     TO anon, authenticated, service_role
     USING (true);
 
-DROP POLICY IF EXISTS "Service role can modify sources" ON public.sources;
-CREATE POLICY "Service role can modify sources"
+DROP POLICY IF EXISTS "Curators manage sources" ON public.sources;
+CREATE POLICY "Curators manage sources"
     ON public.sources
     FOR ALL
-    TO service_role
-    USING (true)
-    WITH CHECK (true);
+    TO authenticated, service_role
+    USING (public.is_admin_or_curator())
+    WITH CHECK (public.is_admin_or_curator());
 
 -- Materials
 DROP POLICY IF EXISTS "Public can view materials" ON public.materials;
@@ -86,29 +97,47 @@ CREATE POLICY "Public can view materials"
     TO anon, authenticated, service_role
     USING (true);
 
-DROP POLICY IF EXISTS "Service role can modify materials" ON public.materials;
-CREATE POLICY "Service role can modify materials"
+DROP POLICY IF EXISTS "Curators manage materials" ON public.materials;
+CREATE POLICY "Curators manage materials"
     ON public.materials
     FOR ALL
-    TO service_role
-    USING (true)
-    WITH CHECK (true);
+    TO authenticated, service_role
+    USING (public.is_admin_or_curator())
+    WITH CHECK (public.is_admin_or_curator());
 
 -- Evidence Records
 DROP POLICY IF EXISTS "Public can view evidence records" ON public.evidence_records;
-CREATE POLICY "Public can view evidence records"
+DROP POLICY IF EXISTS "Public can read published research records" ON public.evidence_records;
+CREATE POLICY "Public can read published research records"
     ON public.evidence_records
     FOR SELECT
     TO anon, authenticated, service_role
-    USING (true);
+    USING (review_status IN ('reviewed', 'draft'));
 
-DROP POLICY IF EXISTS "Service role can modify evidence records" ON public.evidence_records;
-CREATE POLICY "Service role can modify evidence records"
+DROP POLICY IF EXISTS "Curators can insert evidence records" ON public.evidence_records;
+CREATE POLICY "Curators can insert evidence records"
     ON public.evidence_records
-    FOR ALL
-    TO service_role
-    USING (true)
-    WITH CHECK (true);
+    FOR INSERT
+    TO authenticated, service_role
+    WITH CHECK (public.is_admin_or_curator());
+
+DROP POLICY IF EXISTS "Curators can update evidence records" ON public.evidence_records;
+CREATE POLICY "Curators can update evidence records"
+    ON public.evidence_records
+    FOR UPDATE
+    TO authenticated, service_role
+    USING (public.is_admin_or_curator())
+    WITH CHECK (public.is_admin_or_curator());
+
+DROP POLICY IF EXISTS "Admins can delete evidence records" ON public.evidence_records;
+CREATE POLICY "Admins can delete evidence records"
+    ON public.evidence_records
+    FOR DELETE
+    TO authenticated, service_role
+    USING (
+      (current_setting('request.jwt.claims', true)::jsonb -> 'app_metadata' ->> 'role') = 'admin'
+      OR (current_setting('role', true) = 'service_role')
+    );
 
 -- Measurements
 DROP POLICY IF EXISTS "Public can view measurements" ON public.measurements;
@@ -173,7 +202,6 @@ CREATE POLICY "Service role full access to scenarios"
 -- 5. AUDIT LOGS POLICIES (Provenance & Security)
 -- ------------------------------------------------------------------------------
 
--- Audit logs are strictly protected; only service_role can read all audit logs
 DROP POLICY IF EXISTS "Service role read audit logs" ON public.audit_logs;
 CREATE POLICY "Service role read audit logs"
     ON public.audit_logs
@@ -181,11 +209,16 @@ CREATE POLICY "Service role read audit logs"
     TO service_role
     USING (true);
 
--- Backend / Service role can insert audit logs
+DROP POLICY IF EXISTS "Admins read audit logs" ON public.audit_logs;
+CREATE POLICY "Admins read audit logs"
+    ON public.audit_logs
+    FOR SELECT
+    TO authenticated
+    USING (public.is_admin_or_curator());
+
 DROP POLICY IF EXISTS "Service role insert audit logs" ON public.audit_logs;
 CREATE POLICY "Service role insert audit logs"
     ON public.audit_logs
     FOR INSERT
     TO service_role, authenticated, anon
     WITH CHECK (true);
-

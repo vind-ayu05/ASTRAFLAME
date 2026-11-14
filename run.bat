@@ -1,6 +1,6 @@
 @echo off
 title ASTRAFLAME Launcher
-set "PATH=C:\Users\pkolh\.gemini\antigravity\bin;%PATH%"
+set "PATH=%USERPROFILE%\.gemini\antigravity\bin;%PATH%"
 cd /d "%~dp0"
 echo ========================================================
 echo               STARTING ASTRAFLAME

@@ -226,6 +226,15 @@ export async function insertEvidenceRecord(record: any, clientIp?: string): Prom
   return record;
 }
 
+const ALLOWED_EVIDENCE_UPDATE_FIELDS = new Set([
+  'investigation', 'sample_id', 'material_family', 'material_type', 'material_id',
+  'geometry', 'gravity_category', 'gravity_g', 'oxygen_pct', 'total_pressure_kpa',
+  'airflow_cm_s', 'flow_direction', 'thickness_mm', 'width_cm', 'length_cm',
+  'free_volume_m3', 'spread_rate_mm_s', 'burn_length_cm', 'heat_release_peak_w',
+  'co_increase_ppm', 'co2_increase_ppm', 'outcome', 'confidence', 'tier',
+  'review_status', 'source_id', 'source_uuid', 'notes',
+]);
+
 export async function updateEvidenceRecord(recordId: string, updates: any, clientIp?: string): Promise<any> {
   if (isPostgresConfigured) {
     try {
@@ -234,10 +243,15 @@ export async function updateEvidenceRecord(recordId: string, updates: any, clien
       let i = 1;
 
       for (const [key, val] of Object.entries(updates)) {
-        if (key === 'id' || key === 'record_id' || key === 'created_at') continue;
+        if (!ALLOWED_EVIDENCE_UPDATE_FIELDS.has(key)) continue;
         setClauses.push(`${key} = $${i++}`);
         values.push(typeof val === 'object' && val !== null ? JSON.stringify(val) : val);
       }
+
+      if (setClauses.length === 0) {
+        return await fetchEvidenceRecordById(recordId);
+      }
+
       values.push(recordId);
 
       const res = await query(

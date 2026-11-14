@@ -489,29 +489,30 @@ export async function processQuestion(
   const q = normalize(question);
   const intent = classifyIntent(question);
 
-  // 1. Try backend/LLM API if configured
-  const apiUrl: string | undefined = (import.meta as unknown as { env: Record<string, string> }).env?.VITE_CHATBOT_API_URL;
+  // 1. Try secure backend / LLM API route
+  const configuredApiUrl = (import.meta as unknown as { env: Record<string, string> }).env?.VITE_CHATBOT_API_URL;
+  const chatEndpoint = configuredApiUrl ? `${configuredApiUrl}/api/chat` : '/api/chat';
 
-  if (apiUrl) {
-    try {
-      const resp = await fetch(`${apiUrl}/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question,
-          intent,
-          history: history.slice(-6).map((m) => ({ role: m.role, content: m.content })),
-        }),
-        signal: AbortSignal.timeout(14000),
-      });
-      if (resp.ok) {
-        const data = await resp.json() as {
-          content: string;
-          evidenceRecords?: ExperimentRecord[];
-          sourceIds?: string[];
-          isRefusal?: boolean;
-          limitations?: string;
-        };
+  try {
+    const resp = await fetch(chatEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        question: question.slice(0, 1000),
+        intent,
+        history: history.slice(-6).map((m) => ({ role: m.role, content: m.content.slice(0, 500) })),
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (resp.ok) {
+      const data = await resp.json() as {
+        content: string;
+        evidenceRecords?: ExperimentRecord[];
+        sourceIds?: string[];
+        isRefusal?: boolean;
+        limitations?: string;
+      };
+      if (data && data.content) {
         return {
           id: uid(), role: 'assistant', timestamp: new Date(), intent,
           content: data.content,
@@ -521,7 +522,9 @@ export async function processQuestion(
           limitations: data.limitations ?? '',
         };
       }
-    } catch { /* fall through to local engine */ }
+    }
+  } catch {
+    // Graceful fallback to verified local scientific retrieval engine
   }
 
   // 2. Local intent-routed engine

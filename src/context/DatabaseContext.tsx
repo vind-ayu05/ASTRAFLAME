@@ -17,7 +17,7 @@ import {
   getDashboardStatistics,
 } from '../services/databaseService.ts';
 import type { DatabaseStatus, SavedScenario, DashboardStats } from '../services/databaseService.ts';
-import { healthAPI, syncAPI } from '../services/apiClient.ts';
+import { apiClient, healthAPI, syncAPI } from '../services/apiClient.ts';
 import { supabase, isSupabaseConfigured } from '../lib/supabase.ts';
 import { setDynamicRecords } from '../data/records.ts';
 import { setDynamicSources } from '../data/sources.ts';
@@ -135,14 +135,17 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     if (isSupabaseConfigured && supabase) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session?.user) {
+          apiClient.setAuthToken(session.access_token);
           setUser({ id: session.user.id, email: session.user.email });
         }
       });
 
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
         if (session?.user) {
+          apiClient.setAuthToken(session.access_token);
           setUser({ id: session.user.id, email: session.user.email });
         } else {
+          apiClient.setAuthToken(null);
           setUser(null);
         }
       });
@@ -171,19 +174,23 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      if (data.session) apiClient.setAuthToken(data.session.access_token);
       if (data.user) setUser({ id: data.user.id, email: data.user.email });
       return;
     }
-    setUser({ id: 'local-researcher', email });
+    apiClient.setAuthToken('dev-curator-token');
+    setUser({ id: 'local-curator', email });
   }, []);
 
   const signUp = useCallback(async (email: string, password: string) => {
     if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
+      if (data.session) apiClient.setAuthToken(data.session.access_token);
       if (data.user) setUser({ id: data.user.id, email: data.user.email });
       return;
     }
+    apiClient.setAuthToken('dev-token');
     setUser({ id: 'local-researcher', email });
   }, []);
 
@@ -191,6 +198,7 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     if (isSupabaseConfigured && supabase) {
       await supabase.auth.signOut();
     }
+    apiClient.setAuthToken(null);
     setUser(null);
   }, []);
 
